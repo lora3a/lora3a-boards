@@ -1,0 +1,2 @@
+tidy:
+	@find $(CURDIR) -type f -name "*.[ch]" -not -path "$(CURDIR)/bin/*" -exec uncrustify -c $(RIOTBASE)/uncrustify-riot.cfg --replace --no-backup {} \;
