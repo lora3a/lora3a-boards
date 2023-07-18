@@ -1,10 +1,12 @@
 #include <stdio.h>
+#include <string.h>
 #include "saml21_backup_mode.h"
 
 #include "periph_conf.h"
 #include "periph/i2c.h"
 #include "hdc3020.h"
 #include "hdc3020_params.h"
+#include "acme_lora.h"
 
 /* use { .pin=EXTWAKE_NONE } to disable */
 #define EXTWAKE { \
@@ -26,48 +28,63 @@ void sensors_init(void)
 
 void sensors_read(void)
 {
+    char payload[64];
     double temp, hum;
+    lora_state_t lora;
+
+    memset(&payload, 0, sizeof(payload));
 
     puts("Sensors read.");
     if (hdc3020_init(&hdc3020, hdc3020_params) == HDC3020_OK) {
         if (hdc3020_read(&hdc3020, &temp, &hum) == HDC3020_OK) {
-            printf("Temp: %.1f °C, RH: %.1f %%\n", temp, hum);
+            snprintf(payload, sizeof(payload), "Temp: %.1f °C, RH: %.1f %%", temp, hum);
+            snprintf(payload, sizeof(payload), "{\"temp\": %.1f, \"rh\": %.1f}", temp, hum);
+            puts(payload);
         }
         hdc3020_deinit(&hdc3020);
     }
-}
+    else {
+        return;
+    }
 
-void lora_send_command(void)
-{
+    memset(&lora, 0, sizeof(lora));
+    lora.bandwidth = DEFAULT_LORA_BANDWIDTH;
+    lora.spreading_factor = DEFAULT_LORA_SPREADING_FACTOR;
+    lora.coderate = DEFAULT_LORA_CODERATE;
+    lora.channel = DEFAULT_LORA_CHANNEL;
+    lora.power = DEFAULT_LORA_POWER;
+
+
+    if (lora_init(&(lora)) != 0) {
+        return;
+    }
+
+    if (payload[0] == 0) {
+        return;
+    }
+
+    iolist_t packet = {
+        .iol_base = payload,
+        .iol_len = (strlen(payload))
+    };
+
+    lora_write(&packet);
     puts("Lora send command.");
+    lora_off();
 }
 
 void wakeup_task(void)
 {
     puts("Wakeup task.");
     sensors_read();
-    lora_send_command();
 }
 
 void periodic_task(void)
 {
     puts("Periodic task.");
     sensors_read();
-    lora_send_command();
 }
 
-void poweroff_devices(void)
-{
-    size_t i;
-
-    // turn I2C devices off (leave internal bus I2C_DEV(0) alone)
-    for (i = 1; i < I2C_NUMOF; i++) {
-        i2c_release(I2C_DEV(i));
-        i2c_deinit_pins(I2C_DEV(i));
-        gpio_init(i2c_config[i].scl_pin, GPIO_IN_PU);
-        gpio_init(i2c_config[i].sda_pin, GPIO_IN_PU);
-    }
-}
 
 int main(void)
 {
@@ -90,8 +107,7 @@ int main(void)
     }
 
     puts("Entering backup mode.");
-    poweroff_devices();
-    saml21_backup_mode_enter(RADIO_OFF_REQUESTED, extwake, SLEEP_TIME, 1);
+    saml21_backup_mode_enter(0, extwake, SLEEP_TIME, 1);
     // never reached
     return 0;
 }

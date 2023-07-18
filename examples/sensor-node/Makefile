@@ -12,7 +12,10 @@ PORT ?= /dev/ttyUSB0
 
 USEMODULE += hdc3020
 USEMODULE += printf_float
+USEMODULE += periph_spi_reconfigure
 USEMODULE += saml21_backup_mode
+
+USEMODULE += acme_lora
 
 include $(RIOTBASE)/Makefile.include
 include $(LORA3ABASE)/Makefile.include
