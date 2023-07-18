@@ -8,16 +8,6 @@
 #include "net/netdev.h"
 #include "od.h"
 
-#ifdef CONFIG_AES
-#include <string.h>
-
-#include "aes.h"
-#include "periph/hwrng.h"
-#ifndef AES_KEY
-#define AES_KEY "a146e090b068f4a4edf6dc5812930265"
-#endif
-#endif
-
 static consume_data_cb_t *protocol_packet_consumer;
 
 static mutex_t lora_lock = MUTEX_INIT;
