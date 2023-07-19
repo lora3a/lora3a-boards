@@ -1,42 +1,48 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "lis2dw12.h"
+#include "lis2dw12_params.h"
 #include "periph/i2c.h"
 #include "ztimer.h"
 #include "lis2dw12_reg.h"
 
-#ifndef LIS2DW12_I2C_DEVICE
-#define LIS2DW12_I2C_DEVICE I2C_DEV(0)
-#endif
-#ifndef LIS2DW12_I2C_ADDRESS
-#define LIS2DW12_I2C_ADDRESS   0x19
-#endif
+int lis2dw12_init(lis2dw12_t* dev, const lis2dw12_params_t* params)
+{
+    assert(dev && params);
+    dev->params = *params;
 
-static i2c_t bus = I2C_DEV(LIS2DW12_I2C_DEVICE);
-#define SENSOR_BUS bus
-#define SENSOR_ADDR LIS2DW12_I2C_ADDRESS
+    if (gpio_is_valid(dev->params.enable_pin)) {
+        gpio_init(dev->params.enable_pin, GPIO_OUT);
+        gpio_set(dev->params.enable_pin);
+    }
+
+    return LIS2DW12_OK;
+}
 
 int32_t platform_write(void *handle, uint8_t reg, const uint8_t *bufp, uint16_t len)
 {
-    return i2c_write_regs(*(i2c_t *)handle, SENSOR_ADDR, reg, (uint8_t*)bufp, len, 0);
+    lis2dw12_t *dev = (lis2dw12_t *)handle;
+    return i2c_write_regs(dev->params.i2c_dev, dev->params.i2c_addr, reg, (uint8_t*)bufp, len, 0);
 }
 
 int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len)
 {
-    return i2c_read_regs(*(i2c_t *)handle, SENSOR_ADDR, reg, bufp, len, 0);
+    lis2dw12_t *dev = (lis2dw12_t *)handle;
+    return i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, reg, bufp, len, 0);
 }
 
 static stmdev_ctx_t dev_ctx;
 static int16_t data_raw_acceleration[3], data_raw_temperature;
 static uint8_t whoamI, rst;
 
-int lis2dw12_read(float *x_mg, float *y_mg, float *z_mg, float *t_c)
+int lis2dw12_read(const lis2dw12_t* dev, float *x_mg, float *y_mg, float *z_mg, float *t_c)
 {
   if (whoamI != LIS2DW12_ID) {
     /* Initialize mems driver interface */
     dev_ctx.write_reg = platform_write;
     dev_ctx.read_reg = platform_read;
-    dev_ctx.handle = &SENSOR_BUS;
+    dev_ctx.handle = (void *)dev;
     /* Wait sensor boot time */
     ztimer_sleep(ZTIMER_MSEC, 20);
     /* Check device ID */
