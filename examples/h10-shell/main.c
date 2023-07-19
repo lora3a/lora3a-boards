@@ -33,6 +33,11 @@ int main(void)
         auto_init_hdc3020();
     }
 
+    if (IS_USED(MODULE_LIS2DW12)) {
+        extern void auto_init_lis2dw12(void);
+        auto_init_lis2dw12();
+    }
+
     puts("Welcome to RIOT!\n");
     puts("Type `help` for help, type `saul` to see all SAUL devices\n");
 
