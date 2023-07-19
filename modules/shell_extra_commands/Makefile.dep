@@ -2,8 +2,10 @@ USEMODULE += periph_gpio
 USEMODULE += periph_i2c
 USEMODULE += periph_i2c_reconfigure
 USEMODULE += ztimer
+USEMODULE += ztimer_msec
 USEMODULE += fram
 
+USEMODULE += od
 USEMODULE += ps
 USEMODULE += periph_pm
 USEMODULE += saul_reg
