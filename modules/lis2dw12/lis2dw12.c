@@ -5,20 +5,6 @@
 #include "lis2dw12_params.h"
 #include "periph/i2c.h"
 #include "ztimer.h"
-#include "lis2dw12_reg.h"
-
-int lis2dw12_init(lis2dw12_t* dev, const lis2dw12_params_t* params)
-{
-    assert(dev && params);
-    dev->params = *params;
-
-    if (gpio_is_valid(dev->params.enable_pin)) {
-        gpio_init(dev->params.enable_pin, GPIO_OUT);
-        gpio_set(dev->params.enable_pin);
-    }
-
-    return LIS2DW12_OK;
-}
 
 int32_t platform_write(void *handle, uint8_t reg, const uint8_t *bufp, uint16_t len)
 {
@@ -32,67 +18,77 @@ int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len)
     return i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, reg, bufp, len, 0);
 }
 
-static stmdev_ctx_t dev_ctx;
-static int16_t data_raw_acceleration[3], data_raw_temperature;
-static uint8_t whoamI, rst;
-
-int lis2dw12_read(const lis2dw12_t* dev, float *x_mg, float *y_mg, float *z_mg, float *t_c)
+int lis2dw12_init(lis2dw12_t* dev, const lis2dw12_params_t* params)
 {
-  if (whoamI != LIS2DW12_ID) {
+    uint8_t whoamI, rst;
+
+    assert(dev && params);
+    dev->params = *params;
+
+    if (gpio_is_valid(dev->params.enable_pin)) {
+        gpio_init(dev->params.enable_pin, GPIO_OUT);
+        gpio_set(dev->params.enable_pin);
+    }
+
     /* Initialize mems driver interface */
-    dev_ctx.write_reg = platform_write;
-    dev_ctx.read_reg = platform_read;
-    dev_ctx.handle = (void *)dev;
+    dev->ctx.write_reg = platform_write;
+    dev->ctx.read_reg = platform_read;
+    dev->ctx.handle = (void *)dev;
     /* Wait sensor boot time */
     ztimer_sleep(ZTIMER_MSEC, 20);
     /* Check device ID */
-    lis2dw12_device_id_get(&dev_ctx, &whoamI);
+    lis2dw12_device_id_get(&dev->ctx, &whoamI);
 
     if (whoamI != LIS2DW12_ID) {
-      puts("LIS2DW12 not found");
-      return -1;
+      return -LIS2DW12_ERR_NO_DEV;
     }
 
     /* Restore default configuration */
-    lis2dw12_reset_set(&dev_ctx, PROPERTY_ENABLE);
+    lis2dw12_reset_set(&dev->ctx, PROPERTY_ENABLE);
 
     do {
-      lis2dw12_reset_get(&dev_ctx, &rst);
+      lis2dw12_reset_get(&dev->ctx, &rst);
     } while (rst);
 
+    return LIS2DW12_OK;
+}
+
+int lis2dw12_read(lis2dw12_t* dev, float *x_mg, float *y_mg, float *z_mg, float *t_c)
+{
+    int16_t data_raw_acceleration[3], data_raw_temperature;
+
     /* Enable Block Data Update */
-    lis2dw12_block_data_update_set(&dev_ctx, PROPERTY_ENABLE);
+    lis2dw12_block_data_update_set(&dev->ctx, PROPERTY_ENABLE);
     /* Set full scale */
-    //lis2dw12_full_scale_set(&dev_ctx, LIS2DW12_8g);
-    lis2dw12_full_scale_set(&dev_ctx, LIS2DW12_2g);
+    //lis2dw12_full_scale_set(&dev->ctx, LIS2DW12_8g);
+    lis2dw12_full_scale_set(&dev->ctx, LIS2DW12_2g);
     /* Configure filtering chain
      * Accelerometer - filter path / bandwidth
      */
-    lis2dw12_filter_path_set(&dev_ctx, LIS2DW12_LPF_ON_OUT);
-    lis2dw12_filter_bandwidth_set(&dev_ctx, LIS2DW12_ODR_DIV_4);
+    lis2dw12_filter_path_set(&dev->ctx, LIS2DW12_LPF_ON_OUT);
+    lis2dw12_filter_bandwidth_set(&dev->ctx, LIS2DW12_ODR_DIV_4);
     /* Configure power mode */
-    lis2dw12_power_mode_set(&dev_ctx, LIS2DW12_HIGH_PERFORMANCE);
-    //lis2dw12_power_mode_set(&dev_ctx, LIS2DW12_CONT_LOW_PWR_LOW_NOISE_12bit);
+    lis2dw12_power_mode_set(&dev->ctx, LIS2DW12_HIGH_PERFORMANCE);
+    //lis2dw12_power_mode_set(&dev->ctx, LIS2DW12_CONT_LOW_PWR_LOW_NOISE_12bit);
     /* Set Output Data Rate */
-    lis2dw12_data_rate_set(&dev_ctx, LIS2DW12_XL_ODR_25Hz);
-  }
+    lis2dw12_data_rate_set(&dev->ctx, LIS2DW12_XL_ODR_25Hz);
 
-  uint8_t reg = 0;
-  while (!reg) {
-    /* Read output only if new value is available */
-    lis2dw12_flag_data_ready_get(&dev_ctx, &reg);
-  }
+    uint8_t reg = 0;
+    while (!reg) {
+      /* Read output only if new value is available */
+      lis2dw12_flag_data_ready_get(&dev->ctx, &reg);
+    }
 
-  /* Read acceleration data */
-  memset(data_raw_acceleration, 0x00, 3 * sizeof(int16_t));
-  lis2dw12_acceleration_raw_get(&dev_ctx, data_raw_acceleration);
-  *x_mg = lis2dw12_from_fs2_to_mg(data_raw_acceleration[0]);
-  *y_mg = lis2dw12_from_fs2_to_mg(data_raw_acceleration[1]);
-  *z_mg = lis2dw12_from_fs2_to_mg(data_raw_acceleration[2]);
-  /* Read temperature data */
-  data_raw_temperature=0;
-  lis2dw12_temperature_raw_get(&dev_ctx, &data_raw_temperature);
-  *t_c = lis2dw12_from_lsb_to_celsius(data_raw_temperature);
+    /* Read acceleration data */
+    memset(data_raw_acceleration, 0x00, 3 * sizeof(int16_t));
+    lis2dw12_acceleration_raw_get(&dev->ctx, data_raw_acceleration);
+    *x_mg = lis2dw12_from_fs2_to_mg(data_raw_acceleration[0]);
+    *y_mg = lis2dw12_from_fs2_to_mg(data_raw_acceleration[1]);
+    *z_mg = lis2dw12_from_fs2_to_mg(data_raw_acceleration[2]);
+    /* Read temperature data */
+    data_raw_temperature=0;
+    lis2dw12_temperature_raw_get(&dev->ctx, &data_raw_temperature);
+    *t_c = lis2dw12_from_lsb_to_celsius(data_raw_temperature);
 
-  return 0;
+    return 0;
 }
