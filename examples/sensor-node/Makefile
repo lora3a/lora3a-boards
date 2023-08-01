@@ -20,5 +20,25 @@ USEMODULE += saml21_backup_mode
 
 USEMODULE += acme_lora
 
+ifneq ($(BW),)
+	CFLAGS+=-DDEFAULT_LORA_BANDWIDTH=$(BW)
+endif
+
+ifneq ($(SF),)
+	CFLAGS+=-DDEFAULT_LORA_SPREADING_FACTOR=$(SF)
+endif
+
+ifneq ($(CR),)
+	CFLAGS+=-DDEFAULT_LORA_CODERATE=$(CR)
+endif
+
+ifneq ($(CH),)
+	CFLAGS+=-DDEFAULT_LORA_CHANNEL=$(CH)
+endif
+
+ifneq ($(PW),)
+	CFLAGS+=-DDEFAULT_LORA_POWER=$(PW)
+endif
+
 include $(RIOTBASE)/Makefile.include
 include $(LORA3ABASE)/Makefile.include
