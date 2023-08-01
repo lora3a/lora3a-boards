@@ -7,6 +7,7 @@
 #include "thread.h"
 #include "acme_lora.h"
 #include "stdio_base.h"
+#include "base64.h"
 
 uint16_t uint16(const char *ptr)
 {
@@ -17,11 +18,22 @@ uint16_t uint16(const char *ptr)
 
 void dump_message(const char *message, size_t len, int16_t *rssi, int8_t *snr)
 {
-    (void)rssi;
-    (void)snr;
+    size_t size_data = base64_estimate_encode_size(len);
+    char *base64_data = malloc(size_data + 1);
 
-    stdio_write(message, len);
-    puts("");
+    base64_data[size_data] = 0;
+    int error_code = base64_encode(message, len, base64_data, &size_data);
+
+    if (error_code != BASE64_SUCCESS) {
+        printf("ERROR: %d\n", error_code);
+        free(base64_data);
+        return;
+    }
+
+    printf("{\"rssi\": %d, \"snr\": %d, \"payload\": \"%s\" }\n",
+           *rssi, *snr, base64_data);
+
+    free(base64_data);
 }
 
 int main(void)

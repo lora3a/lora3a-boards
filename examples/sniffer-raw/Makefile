@@ -16,6 +16,7 @@ USEMODULE += od_string
 USEMODULE += fmt
 USEMODULE += periph_spi_reconfigure
 USEMODULE += stdio_uart
+USEMODULE += base64
 
 USEMODULE += acme_lora
 
