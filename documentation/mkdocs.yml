@@ -1,0 +1,58 @@
+site_name: lora3a Boards
+
+repo_url: https://github.com/lora3a/lora3a-boards
+repo_name: lora3a/lora3a-boards
+
+copyright: Copyright &copy; 2023 Acme Systems srl
+
+theme:
+  name: material
+  logo: https://www.acmesystems.it/images/LogoAcmeSystemsBlue_160.png
+  palette:
+    scheme: default
+    primary: white
+    accent: blue
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - navigation.prune
+    - navigation.indexes
+    - navigation.footer
+    - content.code.copy
+    - content.tabs.link
+    - toc.follow
+    - navigation.sections
+
+plugins:
+  - search
+  - offline
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - def_list
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      anchorlink: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+nav:
+  - HOME: index.md
+  - Getting Started: getting_started.md
+  - Examples:
+      - Visualizer:
+          - Overview: examples/visualizer/overview.md
+          - Sensor Nodes: examples/visualizer/sensor_node.md
+          - Sniffer: examples/visualizer/sniffer_raw.md
+          - Gateway: https://lora3a.github.io/fox_gateway/
+          - H10 Visualizer: https://lora3a.github.io/h10_visualizer/
