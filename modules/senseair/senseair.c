@@ -21,7 +21,7 @@
 
 #define BSWAP(data)     (((data & 0xff) << 8) + ((data >> 8) & 0xff))
 
-static const char *senseair_signature="SUNR";
+static const char *senseair_signature = "SUNR";
 
 void _print_senseair_data(const senseair_abc_data_t *abc_data)
 {
@@ -37,13 +37,13 @@ void _print_time(struct tm *time)
     (void)time;
 #if ENABLE_DEBUG
     printf("%04i-%02i-%02i %02i:%02i:%02i\n",
-        time->tm_year + 1900, time->tm_mon + 1, time->tm_mday,
-        time->tm_hour, time->tm_min, time->tm_sec
-    );
+           time->tm_year + 1900, time->tm_mon + 1, time->tm_mday,
+           time->tm_hour, time->tm_min, time->tm_sec
+           );
 #endif
 }
 
-int senseair_init(senseair_t* dev, const senseair_params_t* params)
+int senseair_init(senseair_t *dev, const senseair_params_t *params)
 {
     int res;
     uint8_t reg;
@@ -59,7 +59,8 @@ int senseair_init(senseair_t* dev, const senseair_params_t* params)
         ztimer_sleep(ZTIMER_MSEC, 20);
     }
 
-    res = i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_ERROR_STATUS_REG, &data, 2, 0);
+    res = i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_ERROR_STATUS_REG, &data,
+                        2, 0);
     if (res) {
         DEBUG("ERROR %d reading I2C.\n", res);
         gpio_clear(dev->params.enable_pin);
@@ -68,7 +69,8 @@ int senseair_init(senseair_t* dev, const senseair_params_t* params)
     DEBUG("Status: 0x%04x\n", data);
     if (data == 0x8000) {
         DEBUG("Senseair: active.\n");
-    } else {
+    }
+    else {
         DEBUG("Sensair: not found.\n");
         gpio_clear(dev->params.enable_pin);
         return SENSEAIR_ERR_NODEV;
@@ -76,7 +78,8 @@ int senseair_init(senseair_t* dev, const senseair_params_t* params)
     i2c_read_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_MEASURE_MODE_REG, &reg, 0);
     if (reg == 1) {
         DEBUG("Single measurement mode: active.\n");
-    } else {
+    }
+    else {
         i2c_write_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_MEASURE_MODE_REG, 1, 0);
         DEBUG("Single measurement mode: set.\n");
     }
@@ -90,7 +93,8 @@ int senseair_read(const senseair_t *dev, uint16_t *conc_ppm, int16_t *temp_cC)
     uint16_t data = 0;
 
     DEBUG("Starting measure.\n");
-    res = i2c_write_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_START_MEASURE_REG, 1, 0);
+    res =
+        i2c_write_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_START_MEASURE_REG, 1, 0);
     if (res) {
         DEBUG("ERROR %d starting measure.\n", res);
         return SENSEAIR_ERR_MEAS;
@@ -98,7 +102,8 @@ int senseair_read(const senseair_t *dev, uint16_t *conc_ppm, int16_t *temp_cC)
     reg = 0;
     while (reg == 0) {
         ztimer_sleep(ZTIMER_MSEC, 50);
-        res = i2c_read_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_MEASURE_COUNT_REG, &reg, 0);
+        res = i2c_read_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_MEASURE_COUNT_REG,
+                           &reg, 0);
         if (res) {
             DEBUG("ERROR %d during measure.\n", res);
             return SENSEAIR_ERR_MEAS;
@@ -110,7 +115,8 @@ int senseair_read(const senseair_t *dev, uint16_t *conc_ppm, int16_t *temp_cC)
         }
     }
     if (conc_ppm != NULL) {
-        res = i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_CONCENTRATION_REG, &data, 2, 0);
+        res = i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_CONCENTRATION_REG,
+                            &data, 2, 0);
         if (res) {
             DEBUG("ERROR %d reading concentration.\n", res);
             return SENSEAIR_ERR_MEAS;
@@ -119,13 +125,14 @@ int senseair_read(const senseair_t *dev, uint16_t *conc_ppm, int16_t *temp_cC)
         DEBUG("Concentration: %d ppm\n", *conc_ppm);
     }
     if (temp_cC != NULL) {
-        res = i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_TEMPERATURE_REG, &data, 2, 0);
+        res = i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_TEMPERATURE_REG,
+                            &data, 2, 0);
         if (res) {
             DEBUG("ERROR %d reading temperature.\n", res);
             return SENSEAIR_ERR_MEAS;
         }
         *temp_cC = (int16_t)BSWAP(data);
-        DEBUG("Temperature: %4.2f °C\n", (*temp_cC/100.));
+        DEBUG("Temperature: %4.2f °C\n", (*temp_cC / 100.));
     }
     return SENSEAIR_OK;
 }
@@ -136,7 +143,7 @@ int senseair_write_abc_data(const senseair_t *dev, senseair_abc_data_t *abc_data
     struct tm time;
     uint32_t tstamp;
 
-    if (strncmp(abc_data->signature, senseair_signature, sizeof(abc_data->signature))!=0) {
+    if (strncmp(abc_data->signature, senseair_signature, sizeof(abc_data->signature)) != 0) {
         DEBUG("ABC calibration data is not valid.\n");
         return SENSEAIR_ERR_ABC_INVALID;
     }
@@ -146,17 +153,19 @@ int senseair_write_abc_data(const senseair_t *dev, senseair_abc_data_t *abc_data
     // it must be incremented every hour
     rtc_get_time(&time);
     _print_time(&time);
-    tstamp=rtc_mktime(&time);
+    tstamp = rtc_mktime(&time);
     DEBUG("tstamp=%lu\n", tstamp);
     if (tstamp - abc_data->last_update > 3600) {
         DEBUG("ABC time update: 0x%02x%02x -> ", abc_data->data[4], abc_data->data[5]);
-        data = (abc_data->data[4] << 8) + abc_data->data[5] + (tstamp - abc_data->last_update) / 3600;
+        data = (abc_data->data[4] << 8) + abc_data->data[5] + (tstamp - abc_data->last_update) /
+               3600;
         abc_data->data[4] = (data >> 8) & 0xff;
         abc_data->data[5] = data & 0xff;
         DEBUG("0x%02x%02x\n", abc_data->data[4], abc_data->data[5]);
         abc_data->last_update = tstamp;
     }
-    if (i2c_write_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_SAVED_STATE_REG, abc_data->data, sizeof(abc_data->data), 0)) {
+    if (i2c_write_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_SAVED_STATE_REG,
+                       abc_data->data, sizeof(abc_data->data), 0)) {
         DEBUG("ERROR: writing ABC calibration data failed.\n");
         return SENSEAIR_ERR_ABC_WRITE;
     }
@@ -172,10 +181,11 @@ int senseair_read_abc_data(const senseair_t *dev, senseair_abc_data_t *abc_data)
     if (abc_data->last_update == 0) {
         rtc_get_time(&time);
         _print_time(&time);
-        abc_data->last_update=rtc_mktime(&time);
+        abc_data->last_update = rtc_mktime(&time);
     }
     memset(abc_data->data, 0, sizeof(abc_data->data));
-    if (i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_SAVED_STATE_REG, abc_data->data, sizeof(abc_data->data), 0)) {
+    if (i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_SAVED_STATE_REG,
+                      abc_data->data, sizeof(abc_data->data), 0)) {
         DEBUG("ERROR: reading ABC calibration data failed.\n");
         return SENSEAIR_ERR_ABC_READ;
     }
