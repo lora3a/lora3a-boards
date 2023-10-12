@@ -32,22 +32,22 @@ extern "C" {
  */
 static const tc32_conf_t timer_config[] = {
     {   /* Timer 0 - System Clock */
-        .dev            = TC0,
-        .irq            = TC0_IRQn,
-        .mclk           = &MCLK->APBCMASK.reg,
-        .mclk_mask      = MCLK_APBCMASK_TC0 | MCLK_APBCMASK_TC1,
-        .gclk_id        = TC0_GCLK_ID,
-        .gclk_src       = SAM0_GCLK_TIMER,
-        .flags          = TC_CTRLA_MODE_COUNT32,
+        .dev = TC0,
+        .irq = TC0_IRQn,
+        .mclk = &MCLK->APBCMASK.reg,
+        .mclk_mask = MCLK_APBCMASK_TC0 | MCLK_APBCMASK_TC1,
+        .gclk_id = TC0_GCLK_ID,
+        .gclk_src = SAM0_GCLK_TIMER,
+        .flags = TC_CTRLA_MODE_COUNT32,
     },
     {
-        .dev            = TC2,
-        .irq            = TC2_IRQn,
-        .mclk           = &MCLK->APBCMASK.reg,
-        .mclk_mask      = MCLK_APBCMASK_TC2 | MCLK_APBCMASK_TC3,
-        .gclk_id        = TC2_GCLK_ID,
-        .gclk_src       = SAM0_GCLK_TIMER,
-        .flags          = TC_CTRLA_MODE_COUNT32,
+        .dev = TC2,
+        .irq = TC2_IRQn,
+        .mclk = &MCLK->APBCMASK.reg,
+        .mclk_mask = MCLK_APBCMASK_TC2 | MCLK_APBCMASK_TC3,
+        .gclk_id = TC2_GCLK_ID,
+        .gclk_src = SAM0_GCLK_TIMER,
+        .flags = TC_CTRLA_MODE_COUNT32,
     }
 };
 
@@ -65,48 +65,48 @@ static const tc32_conf_t timer_config[] = {
  */
 static const uart_conf_t uart_config[] = {
     {    /* Virtual COM Port */
-        .dev      = &SERCOM3->USART,
-        .rx_pin   = GPIO_PIN(PA, 22),
-        .tx_pin   = GPIO_PIN(PA, 23),
+        .dev = &SERCOM3->USART,
+        .rx_pin = GPIO_PIN(PA, 22),
+        .tx_pin = GPIO_PIN(PA, 23),
 #ifdef MODULE_PERIPH_UART_HW_FC
-        .rts_pin  = GPIO_UNDEF,
-        .cts_pin  = GPIO_UNDEF,
+        .rts_pin = GPIO_UNDEF,
+        .cts_pin = GPIO_UNDEF,
 #endif
-        .mux      = GPIO_MUX_C,
-        .rx_pad   = UART_PAD_RX_1,
-        .tx_pad   = UART_PAD_TX_0,
-        .flags    = UART_FLAG_NONE,
+        .mux = GPIO_MUX_C,
+        .rx_pad = UART_PAD_RX_1,
+        .tx_pad = UART_PAD_TX_0,
+        .flags = UART_FLAG_NONE,
         .gclk_src = SAM0_GCLK_MAIN,
-#if ENABLE_ACME1 == MODE_UART
+#if ACME1_BUS_MODE == MODE_UART
     },
     {    /* ACME1 USART */
-        .dev      = &SERCOM5->USART,
-        .rx_pin   = GPIO_PIN(PB, 3),
-        .tx_pin   = GPIO_PIN(PB, 2),
+        .dev = &SERCOM5->USART,
+        .rx_pin = GPIO_PIN(PB, 3),
+        .tx_pin = GPIO_PIN(PB, 2),
 #ifdef MODULE_PERIPH_UART_HW_FC
-        .rts_pin  = GPIO_UNDEF,
-        .cts_pin  = GPIO_UNDEF,
+        .rts_pin = GPIO_UNDEF,
+        .cts_pin = GPIO_UNDEF,
 #endif
-        .mux      = GPIO_MUX_D,
-        .rx_pad   = UART_PAD_RX_1,
-        .tx_pad   = UART_PAD_TX_0,
-        .flags    = UART_FLAG_NONE,
+        .mux = GPIO_MUX_D,
+        .rx_pad = UART_PAD_RX_1,
+        .tx_pad = UART_PAD_TX_0,
+        .flags = UART_FLAG_NONE,
         .gclk_src = SAM0_GCLK_MAIN,
 #endif
-#if ENABLE_ACME2 == MODE_UART
+#if ACME2_BUS_MODE == MODE_UART
     },
     {
-        .dev      = &(SERCOM0->USART),
-        .rx_pin  = GPIO_PIN(PA, 5),
-        .tx_pin  = GPIO_PIN(PA, 4),
+        .dev = &(SERCOM0->USART),
+        .rx_pin = GPIO_PIN(PA, 5),
+        .tx_pin = GPIO_PIN(PA, 4),
 #ifdef MODULE_PERIPH_UART_HW_FC
-        .rts_pin  = GPIO_UNDEF,
-        .cts_pin  = GPIO_UNDEF,
+        .rts_pin = GPIO_UNDEF,
+        .cts_pin = GPIO_UNDEF,
 #endif
-        .mux      = GPIO_MUX_D,
-        .rx_pad   = UART_PAD_RX_1,
-        .tx_pad   = UART_PAD_TX_0,
-        .flags    = UART_FLAG_NONE,
+        .mux = GPIO_MUX_D,
+        .rx_pad = UART_PAD_RX_1,
+        .tx_pad = UART_PAD_TX_0,
+        .flags = UART_FLAG_NONE,
         .gclk_src = SAM0_GCLK_MAIN,
 #endif
     }
@@ -114,15 +114,15 @@ static const uart_conf_t uart_config[] = {
 
 /* interrupt function name mapping */
 #define UART_0_ISR          isr_sercom3
-#if ENABLE_ACME1 == MODE_UART
+#if ACME1_BUS_MODE == MODE_UART
 #define UART_1_ISR          isr_sercom5
 #define ACME1_UART_DEV  UART_DEV(1)
-#if ENABLE_ACME2 == MODE_UART
+#if ACME2_BUS_MODE == MODE_UART
 #define UART_2_ISR          isr_sercom0
 #define ACME2_UART_DEV  UART_DEV(2)
 #endif
 #else
-#if ENABLE_ACME2 == MODE_UART
+#if ACME2_BUS_MODE == MODE_UART
 #define UART_1_ISR          isr_sercom0
 #define ACME2_UART_DEV  UART_DEV(1)
 #endif
@@ -137,13 +137,13 @@ static const uart_conf_t uart_config[] = {
  */
 static const spi_conf_t spi_config[] = {
     {
-        .dev      = &(SERCOM4->SPI),
+        .dev = &(SERCOM4->SPI),
         .miso_pin = GPIO_PIN(PC, 19),
         .mosi_pin = GPIO_PIN(PB, 30),
-        .clk_pin  = GPIO_PIN(PC, 18),
+        .clk_pin = GPIO_PIN(PC, 18),
         .miso_mux = GPIO_MUX_F,
         .mosi_mux = GPIO_MUX_F,
-        .clk_mux  = GPIO_MUX_F,
+        .clk_mux = GPIO_MUX_F,
         .miso_pad = SPI_PAD_MISO_0,
         .mosi_pad = SPI_PAD_MOSI_2_SCK_3,
         .gclk_src = SAM0_GCLK_MAIN,
@@ -151,16 +151,16 @@ static const spi_conf_t spi_config[] = {
         .tx_trigger = SERCOM4_DMAC_ID_TX,
         .rx_trigger = SERCOM4_DMAC_ID_RX,
 #endif
-#if ENABLE_ACME1 == MODE_SPI
+#if ACME1_BUS_MODE == MODE_SPI
     },
     {
-        .dev      = &(SERCOM5->SPI),
+        .dev = &(SERCOM5->SPI),
         .miso_pin = GPIO_PIN(PB, 3),
         .mosi_pin = GPIO_PIN(PB, 2),
-        .clk_pin  = GPIO_PIN(PB, 23),
+        .clk_pin = GPIO_PIN(PB, 23),
         .miso_mux = GPIO_MUX_D,
         .mosi_mux = GPIO_MUX_D,
-        .clk_mux  = GPIO_MUX_D,
+        .clk_mux = GPIO_MUX_D,
         .miso_pad = SPI_PAD_MISO_1,
         .mosi_pad = SPI_PAD_MOSI_0_SCK_3,
         .gclk_src = SAM0_GCLK_MAIN,
@@ -169,16 +169,16 @@ static const spi_conf_t spi_config[] = {
         .rx_trigger = SERCOM5_DMAC_ID_RX,
 #endif
 #endif
-#if ENABLE_ACME2 == MODE_SPI
+#if ACME2_BUS_MODE == MODE_SPI
     },
     {
-        .dev      = &(SERCOM0->SPI),
+        .dev = &(SERCOM0->SPI),
         .miso_pin = GPIO_PIN(PA, 5),
         .mosi_pin = GPIO_PIN(PA, 4),
-        .clk_pin  = GPIO_PIN(PA, 7),
+        .clk_pin = GPIO_PIN(PA, 7),
         .miso_mux = GPIO_MUX_D,
         .mosi_mux = GPIO_MUX_D,
-        .clk_mux  = GPIO_MUX_D,
+        .clk_mux = GPIO_MUX_D,
         .miso_pad = SPI_PAD_MISO_1,
         .mosi_pad = SPI_PAD_MOSI_0_SCK_3,
         .gclk_src = SAM0_GCLK_MAIN,
@@ -190,13 +190,13 @@ static const spi_conf_t spi_config[] = {
     }
 };
 
-#if ENABLE_ACME1 == MODE_SPI
+#if ACME1_BUS_MODE == MODE_SPI
 #define ACME1_SPI_DEV  SPI_DEV(1)
-#if ENABLE_ACME2 == MODE_SPI
+#if ACME2_BUS_MODE == MODE_SPI
 #define ACME2_SPI_DEV  SPI_DEV(2)
 #endif
 #else
-#if ENABLE_ACME2 == MODE_SPI
+#if ACME2_BUS_MODE == MODE_SPI
 #define ACME2_SPI_DEV  SPI_DEV(1)
 #endif
 #endif
@@ -210,48 +210,37 @@ static const spi_conf_t spi_config[] = {
  */
 static const i2c_conf_t i2c_config[] = {
     {
-        .dev      = &(SERCOM1->I2CM),
-        .speed    = I2C_SPEED_NORMAL,
-        .scl_pin  = GPIO_PIN(PA, 17),
-        .sda_pin  = GPIO_PIN(PA, 16),
-        .mux      = GPIO_MUX_C,
+        .dev = &(SERCOM1->I2CM),
+        .speed = I2C_SPEED_NORMAL,
+        .scl_pin = GPIO_PIN(PA, 17),
+        .sda_pin = GPIO_PIN(PA, 16),
+        .mux = GPIO_MUX_C,
         .gclk_src = SAM0_GCLK_MAIN,
-        .flags    = I2C_FLAG_NONE
-#if ENABLE_ACME1 == MODE_I2C
+        .flags = I2C_FLAG_NONE
+#if ACME1_BUS_MODE == MODE_I2C
     },
     {
-        .dev      = &(SERCOM5->I2CM),
-        .speed    = I2C_SPEED_NORMAL,
-        .scl_pin  = GPIO_PIN(PB, 3),
-        .sda_pin  = GPIO_PIN(PB, 2),
-        .mux      = GPIO_MUX_D,
+        .dev = &(SERCOM5->I2CM),
+        .speed = I2C_SPEED_NORMAL,
+        .scl_pin = GPIO_PIN(PB, 3),
+        .sda_pin = GPIO_PIN(PB, 2),
+        .mux = GPIO_MUX_D,
         .gclk_src = SAM0_GCLK_MAIN,
-        .flags    = I2C_FLAG_NONE
+        .flags = I2C_FLAG_NONE
 #endif
-#if ENABLE_ACME2 == MODE_I2C
+#if ACME2_BUS_MODE == MODE_I2C
     },
     {
-        .dev      = &(SERCOM0->I2CM),
-        .speed    = I2C_SPEED_NORMAL,
-        .scl_pin  = GPIO_PIN(PA, 5),
-        .sda_pin  = GPIO_PIN(PA, 4),
-        .mux      = GPIO_MUX_D,
+        .dev = &(SERCOM0->I2CM),
+        .speed = I2C_SPEED_NORMAL,
+        .scl_pin = GPIO_PIN(PA, 5),
+        .sda_pin = GPIO_PIN(PA, 4),
+        .mux = GPIO_MUX_D,
         .gclk_src = SAM0_GCLK_MAIN,
-        .flags    = I2C_FLAG_NONE
+        .flags = I2C_FLAG_NONE
 #endif
-     }
+    }
 };
-
-#if ENABLE_ACME1 == MODE_I2C
-#define ACME1_I2C_DEV  I2C_DEV(1)
-#if ENABLE_ACME2 == MODE_I2C
-#define ACME2_I2C_DEV  I2C_DEV(2)
-#endif
-#else
-#if ENABLE_ACME2 == MODE_I2C
-#define ACME2_I2C_DEV  I2C_DEV(1)
-#endif
-#endif
 
 #define I2C_NUMOF          ARRAY_SIZE(i2c_config)
 /** @} */
@@ -287,8 +276,8 @@ static const i2c_conf_t i2c_config[] = {
 
 static const adc_conf_chan_t adc_channels[] = {
     /* port, pin, muxpos */
-    { .inputctrl = ADC_INPUTCTRL_MUXPOS_SCALEDIOVCC }, // mux pin is unused
-    { .inputctrl = ADC_INPUTCTRL_MUXPOS_PA08 },        // Vpanel
+    { .inputctrl = ADC_INPUTCTRL_MUXPOS_SCALEDIOVCC },  // mux pin is unused
+    { .inputctrl = ADC_INPUTCTRL_MUXPOS_PA08 },         // Vpanel
 };
 
 
@@ -298,15 +287,15 @@ static const adc_conf_chan_t adc_channels[] = {
 /**
  * @name USB peripheral configuration
  * @{
-*/
+ */
 
 #ifdef MODULE_PERIPH_USBDEV
 static const sam0_common_usb_config_t sam_usbdev_config[] = {
     {
-        .dm       = GPIO_PIN(PA, 24),
-        .dp       = GPIO_PIN(PA, 25),
-        .d_mux    = GPIO_MUX_G,
-        .device   = &USB->DEVICE,
+        .dm = GPIO_PIN(PA, 24),
+        .dp = GPIO_PIN(PA, 25),
+        .d_mux = GPIO_MUX_G,
+        .device = &USB->DEVICE,
         .gclk_src = SAM0_GCLK_48MHZ,
     }
 };

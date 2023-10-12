@@ -12,14 +12,14 @@ extern "C" {
 #define SX127X_PARAM_PASELECT   SX127X_PA_BOOST
 #endif
 
-#define SX127X_PARAMS  { .spi       = (SPI_DEV(0)),               \
-                         .nss_pin   = GPIO_PIN(PB, 31), /* D10 */ \
+#define SX127X_PARAMS  { .spi = (SPI_DEV(0)),               \
+                         .nss_pin = GPIO_PIN(PB, 31),   /* D10 */ \
                          .reset_pin = GPIO_PIN(PB, 15), /* A0 */  \
-                         .dio0_pin  = GPIO_PIN(PB, 16), /* D2 */  \
-                         .dio1_pin  = GPIO_PIN(PA, 11), /* D3 */  \
-                         .dio2_pin  = GPIO_PIN(PA, 12), /* D4 */  \
-                         .dio3_pin  = GPIO_PIN(PB, 17), /* D5 */  \
-                         .paselect  = (SX127X_PARAM_PASELECT) }
+                         .dio0_pin = GPIO_PIN(PB, 16),  /* D2 */  \
+                         .dio1_pin = GPIO_PIN(PA, 11),  /* D3 */  \
+                         .dio2_pin = GPIO_PIN(PA, 12),  /* D4 */  \
+                         .dio3_pin = GPIO_PIN(PB, 17),  /* D5 */  \
+                         .paselect = (SX127X_PARAM_PASELECT) }
 
 #define TCXO_PWR_PIN        GPIO_PIN(PA, 9)     /**< 32 MHz TCXO 1ppm oscillator for radio enable */
 #define TX_OUTPUT_SEL_PIN   GPIO_PIN(PA, 13)    /**< BAND_SEL */
@@ -27,6 +27,49 @@ extern "C" {
 #define BTN0_PIN       GPIO_PIN(PA, 6)
 #ifndef BTN0_MODE
 #define BTN0_MODE      GPIO_IN_PU
+#endif
+
+#define DEBUG_RX_PIN        GPIO_PIN(PA, 22)
+#define DEBUG_TX_PIN        GPIO_PIN(PA, 23)
+
+#define ACME0_POWER_PIN    GPIO_PIN(PA, 27)
+#define ACME1_POWER_PIN    GPIO_PIN(PA, 28)
+#define ACME2_POWER_PIN    GPIO_PIN(PA, 31)
+
+#ifndef ACME0_POWER
+    #define ACME0_POWER    0
+#endif
+
+#ifndef ACME1_POWER
+    #define ACME1_POWER    0
+#endif
+
+#ifndef ACME2_POWER
+    #define ACME2_POWER    0
+#endif
+
+#ifndef ACME0_POWER_PIN_INITIAL_VALUE
+    #ifdef ACME0_POWER
+        #define ACME0_POWER_PIN_INITIAL_VALUE 1
+    #else
+        #define ACME0_POWER_PIN_INITIAL_VALUE 0
+    #endif
+#endif
+
+#ifndef ACME1_POWER_PIN_INITIAL_VALUE
+    #ifdef ACME1_POWER
+        #define ACME1_POWER_PIN_INITIAL_VALUE 1
+    #else
+        #define ACME1_POWER_PIN_INITIAL_VALUE 0
+    #endif
+#endif
+
+#ifndef ACME2_POWER_PIN_INITIAL_VALUE
+    #ifdef ACME2_POWER
+        #define ACME2_POWER_PIN_INITIAL_VALUE 1
+    #else
+        #define ACME2_POWER_PIN_INITIAL_VALUE 0
+    #endif
 #endif
 
 #define I2C0_ENABLE_PIN     GPIO_PIN(PA, 27)

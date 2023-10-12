@@ -2,6 +2,7 @@
 
 #include "board.h"
 #include "periph/gpio.h"
+#include "acme_bus_mode.h"
 
 void board_init(void)
 {
@@ -17,15 +18,15 @@ void board_init(void)
     gpio_write(TX_OUTPUT_SEL_PIN, !SX127X_PARAM_PASELECT);
 #endif /* USEMODULE_SX127X */
 
-#if defined(ENABLE_ACME1)
-	printf("Enable ACME Sensor 1 as %d\n", ENABLE_ACME1);
+#if ACME1_POWER
+    printf("Enable ACME Sensor 1 as %s\n", BUS_MODE_TO_STR(ACME1_BUS_MODE));
 #else
     gpio_init(GPIO_PIN(PB, 2), GPIO_IN_PU);
     gpio_init(GPIO_PIN(PB, 3), GPIO_IN_PU);
 #endif
 
-#if defined(ENABLE_ACME2)
-	printf("Enable ACME Sensor 2 as %d\n", ENABLE_ACME2);
+#if ACME2_POWER
+    printf("Enable ACME Sensor 2 as %s\n", BUS_MODE_TO_STR(ACME2_BUS_MODE));
 #else
     gpio_init(GPIO_PIN(PA, 4), GPIO_IN_PU);
     gpio_init(GPIO_PIN(PA, 5), GPIO_IN_PU);
