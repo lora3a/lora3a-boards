@@ -12,18 +12,19 @@ extern "C" {
 #ifndef LIS2DW12_I2C_DEV
 #define LIS2DW12_I2C_DEV I2C_DEV(0)
 #endif
+
 #ifndef LIS2DW12_I2C_ADDR
 #define LIS2DW12_I2C_ADDR   0x19
 #endif
 
-#ifndef LIS2DW12_ENABLE_PIN
-#define LIS2DW12_ENABLE_PIN GPIO_UNDEF
+#ifndef LIS2DW12_POWER_PIN
+#define LIS2DW12_POWER_PIN GPIO_UNDEF
 #endif
 
 #ifndef LIS2DW12_PARAMS
 #define LIS2DW12_PARAMS { .i2c_dev = LIS2DW12_I2C_DEV,     \
                           .i2c_addr = LIS2DW12_I2C_ADDR,    \
-                          .enable_pin = LIS2DW12_ENABLE_PIN }
+                          .power_pin = LIS2DW12_POWER_PIN }
 #endif
 
 #ifndef LIS2DW12_SAULINFO

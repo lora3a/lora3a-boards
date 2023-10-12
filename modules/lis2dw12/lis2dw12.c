@@ -9,25 +9,27 @@
 int32_t platform_write(void *handle, uint8_t reg, const uint8_t *bufp, uint16_t len)
 {
     lis2dw12_t *dev = (lis2dw12_t *)handle;
-    return i2c_write_regs(dev->params.i2c_dev, dev->params.i2c_addr, reg, (uint8_t*)bufp, len, 0);
+
+    return i2c_write_regs(dev->params.i2c_dev, dev->params.i2c_addr, reg, (uint8_t *)bufp, len, 0);
 }
 
 int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len)
 {
     lis2dw12_t *dev = (lis2dw12_t *)handle;
+
     return i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, reg, bufp, len, 0);
 }
 
-int lis2dw12_init(lis2dw12_t* dev, const lis2dw12_params_t* params)
+int lis2dw12_init(lis2dw12_t *dev, const lis2dw12_params_t *params)
 {
     uint8_t whoamI, rst;
 
     assert(dev && params);
     dev->params = *params;
 
-    if (gpio_is_valid(dev->params.enable_pin)) {
-        gpio_init(dev->params.enable_pin, GPIO_OUT);
-        gpio_set(dev->params.enable_pin);
+    if (gpio_is_valid(dev->params.power_pin)) {
+        gpio_init(dev->params.power_pin, GPIO_OUT);
+        gpio_set(dev->params.power_pin);
     }
 
     /* Initialize mems driver interface */
@@ -40,20 +42,20 @@ int lis2dw12_init(lis2dw12_t* dev, const lis2dw12_params_t* params)
     lis2dw12_device_id_get(&dev->ctx, &whoamI);
 
     if (whoamI != LIS2DW12_ID) {
-      return -LIS2DW12_ERR_NO_DEV;
+        return -LIS2DW12_ERR_NO_DEV;
     }
 
     /* Restore default configuration */
     lis2dw12_reset_set(&dev->ctx, PROPERTY_ENABLE);
 
     do {
-      lis2dw12_reset_get(&dev->ctx, &rst);
+        lis2dw12_reset_get(&dev->ctx, &rst);
     } while (rst);
 
     return LIS2DW12_OK;
 }
 
-int lis2dw12_read(lis2dw12_t* dev, float *x_mg, float *y_mg, float *z_mg, float *t_c)
+int lis2dw12_read(lis2dw12_t *dev, float *x_mg, float *y_mg, float *z_mg, float *t_c)
 {
     int16_t data_raw_acceleration[3], data_raw_temperature;
 
@@ -75,8 +77,8 @@ int lis2dw12_read(lis2dw12_t* dev, float *x_mg, float *y_mg, float *z_mg, float 
 
     uint8_t reg = 0;
     while (!reg) {
-      /* Read output only if new value is available */
-      lis2dw12_flag_data_ready_get(&dev->ctx, &reg);
+        /* Read output only if new value is available */
+        lis2dw12_flag_data_ready_get(&dev->ctx, &reg);
     }
 
     /* Read acceleration data */
@@ -86,7 +88,7 @@ int lis2dw12_read(lis2dw12_t* dev, float *x_mg, float *y_mg, float *z_mg, float 
     *y_mg = lis2dw12_from_fs2_to_mg(data_raw_acceleration[1]);
     *z_mg = lis2dw12_from_fs2_to_mg(data_raw_acceleration[2]);
     /* Read temperature data */
-    data_raw_temperature=0;
+    data_raw_temperature = 0;
     lis2dw12_temperature_raw_get(&dev->ctx, &data_raw_temperature);
     *t_c = lis2dw12_from_lsb_to_celsius(data_raw_temperature);
 

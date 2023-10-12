@@ -1,5 +1,5 @@
-#ifndef LIS2DW12_UTIL_H_
-#define LIS2DW12_UTIL_H_
+#ifndef LIS2DW12_UTIL_H
+#define LIS2DW12_UTIL_H
 
 #include <math.h>
 #include <stdbool.h>
@@ -135,4 +135,4 @@ void read_accelerometer(lis2dw12_t *dev, rotation_matrix *rotation_matrix)
     return;
 }
 
-#endif  // LIS2DW12_UTIL_H_
+#endif  // LIS2DW12_UTIL_H
