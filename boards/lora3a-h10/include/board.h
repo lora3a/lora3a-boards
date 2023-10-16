@@ -72,12 +72,12 @@ extern "C" {
     #endif
 #endif
 
-#define I2C0_ENABLE_PIN     GPIO_PIN(PA, 27)
-
-#define HDC3020_ENABLE_PIN  I2C0_ENABLE_PIN
+#ifdef H10_WITH_HDC3020
+#define HDC3020_ENABLE_PIN  ACME0_POWER_PIN
 #define HDC3020_PARAM_I2C   (I2C_DEV(0))
+#endif
 
-#define FRAM_ENABLE_PIN     I2C0_ENABLE_PIN
+#define FRAM_ENABLE_PIN     ACME0_POWER_PIN
 #define FRAM_PARAM_I2C      (I2C_DEV(0))
 
 void board_init(void);
