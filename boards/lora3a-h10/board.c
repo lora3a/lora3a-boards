@@ -18,6 +18,13 @@ void board_init(void)
     gpio_write(TX_OUTPUT_SEL_PIN, !SX127X_PARAM_PASELECT);
 #endif /* USEMODULE_SX127X */
 
+// #if ACME0_POWER
+//     printf("Enable ACME Sensor 0 as %s\n", BUS_MODE_TO_STR(ACME0_BUS_MODE));
+// #else
+//     gpio_init(GPIO_PIN(PA, 16), GPIO_IN_PU);
+//     gpio_init(GPIO_PIN(PA, 17), GPIO_IN_PU);
+// #endif
+
 #if ACME1_POWER
     printf("Enable ACME Sensor 1 as %s\n", BUS_MODE_TO_STR(ACME1_BUS_MODE));
 #else

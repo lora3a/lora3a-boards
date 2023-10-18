@@ -209,6 +209,7 @@ static const spi_conf_t spi_config[] = {
  * @{
  */
 static const i2c_conf_t i2c_config[] = {
+#if defined(ACME0_BUS_MODE) && ACME0_BUS_MODE == MODE_I2C
     {
         .dev = &(SERCOM1->I2CM),
         .speed = I2C_SPEED_NORMAL,
@@ -217,8 +218,9 @@ static const i2c_conf_t i2c_config[] = {
         .mux = GPIO_MUX_C,
         .gclk_src = SAM0_GCLK_MAIN,
         .flags = I2C_FLAG_NONE
-#if ACME1_BUS_MODE == MODE_I2C
     },
+#endif
+#if defined(ACME1_BUS_MODE) && ACME1_BUS_MODE == MODE_I2C
     {
         .dev = &(SERCOM5->I2CM),
         .speed = I2C_SPEED_NORMAL,
@@ -227,9 +229,9 @@ static const i2c_conf_t i2c_config[] = {
         .mux = GPIO_MUX_D,
         .gclk_src = SAM0_GCLK_MAIN,
         .flags = I2C_FLAG_NONE
-#endif
-#if ACME2_BUS_MODE == MODE_I2C
     },
+#endif
+#if defined(ACME2_BUS_MODE) && ACME2_BUS_MODE == MODE_I2C
     {
         .dev = &(SERCOM0->I2CM),
         .speed = I2C_SPEED_NORMAL,
@@ -238,8 +240,8 @@ static const i2c_conf_t i2c_config[] = {
         .mux = GPIO_MUX_D,
         .gclk_src = SAM0_GCLK_MAIN,
         .flags = I2C_FLAG_NONE
-#endif
     }
+#endif
 };
 
 #define I2C_NUMOF          ARRAY_SIZE(i2c_config)
