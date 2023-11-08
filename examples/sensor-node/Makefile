@@ -1,5 +1,5 @@
 APPLICATION = sensor-node
-BOARD ?= lora3a-h10
+BOARD ?= berta-h10
 BASE ?= $(CURDIR)/../../..
 LORA3ABASE ?= $(BASE)/lora3a-boards
 RIOTBASE ?= $(BASE)/RIOT

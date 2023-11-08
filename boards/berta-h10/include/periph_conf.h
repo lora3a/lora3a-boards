@@ -77,6 +77,22 @@ static const uart_conf_t uart_config[] = {
         .tx_pad = UART_PAD_TX_0,
         .flags = UART_FLAG_NONE,
         .gclk_src = SAM0_GCLK_MAIN,
+#if ACME0_BUS_MODE == MODE_UART
+    },
+    {    /* ACME0 USART */
+        .dev = &SERCOM1->USART,
+        .rx_pin = GPIO_PIN(PA, 17),
+        .tx_pin = GPIO_PIN(PA, 16),
+#ifdef MODULE_PERIPH_UART_HW_FC
+        .rts_pin = GPIO_UNDEF,
+        .cts_pin = GPIO_UNDEF,
+#endif
+        .mux = GPIO_MUX_C,
+        .rx_pad = UART_PAD_RX_1,
+        .tx_pad = UART_PAD_TX_0,
+        .flags = UART_FLAG_NONE,
+        .gclk_src = SAM0_GCLK_MAIN,
+#endif
 #if ACME1_BUS_MODE == MODE_UART
     },
     {    /* ACME1 USART */
@@ -114,18 +130,40 @@ static const uart_conf_t uart_config[] = {
 
 /* interrupt function name mapping */
 #define UART_0_ISR          isr_sercom3
-#if ACME1_BUS_MODE == MODE_UART
-#define UART_1_ISR          isr_sercom5
-#define ACME1_UART_DEV  UART_DEV(1)
-#if ACME2_BUS_MODE == MODE_UART
-#define UART_2_ISR          isr_sercom0
-#define ACME2_UART_DEV  UART_DEV(2)
-#endif
+
+#if ACME0_BUS_MODE == MODE_I2C
+    #define UART_1_ISR          isr_sercom1
+    #define ACME0_UART_DEV      UART_DEV(1)
+
+    #if ACME1_BUS_MODE == MODE_UART
+        #define UART_2_ISR          isr_sercom5
+        #define ACME1_UART_DEV      UART_DEV(2)
+
+        #if ACME2_BUS_MODE == MODE_UART
+            #define UART_3_ISR          isr_sercom0
+            #define ACME2_UART_DEV      UART_DEV(3)
+        #endif
+    #else
+        #if ACME2_BUS_MODE == MODE_UART
+            #define UART_2_ISR          isr_sercom0
+            #define ACME2_UART_DEV      UART_DEV(2)
+        #endif
+    #endif
 #else
-#if ACME2_BUS_MODE == MODE_UART
-#define UART_1_ISR          isr_sercom0
-#define ACME2_UART_DEV  UART_DEV(1)
-#endif
+    #if ACME1_BUS_MODE == MODE_UART
+        #define UART_1_ISR          isr_sercom5
+        #define ACME1_UART_DEV      UART_DEV(1)
+
+        #if ACME2_BUS_MODE == MODE_UART
+            #define UART_2_ISR          isr_sercom0
+            #define ACME2_UART_DEV      UART_DEV(2)
+        #endif
+    #else
+        #if ACME2_BUS_MODE == MODE_UART
+            #define UART_1_ISR          isr_sercom0
+            #define ACME2_UART_DEV      UART_DEV(1)
+        #endif
+    #endif
 #endif
 
 #define UART_NUMOF          ARRAY_SIZE(uart_config)
@@ -150,6 +188,24 @@ static const spi_conf_t spi_config[] = {
 #ifdef MODULE_PERIPH_DMA
         .tx_trigger = SERCOM4_DMAC_ID_TX,
         .rx_trigger = SERCOM4_DMAC_ID_RX,
+#endif
+#if ACME0_BUS_MODE == MODE_SPI
+    },
+    {
+        .dev = &(SERCOM1->SPI),
+        .miso_pin = GPIO_PIN(PA, 17),
+        .mosi_pin = GPIO_PIN(PA, 16),
+        .clk_pin = GPIO_PIN(PA, 19),
+        .miso_mux = GPIO_MUX_C,
+        .mosi_mux = GPIO_MUX_C,
+        .clk_mux = GPIO_MUX_C,
+        .miso_pad = SPI_PAD_MISO_1,
+        .mosi_pad = SPI_PAD_MOSI_0_SCK_3,
+        .gclk_src = SAM0_GCLK_MAIN,
+    #ifdef MODULE_PERIPH_DMA
+        .tx_trigger = SERCOM1_DMAC_ID_TX,
+        .rx_trigger = SERCOM1_DMAC_ID_RX,
+    #endif
 #endif
 #if ACME1_BUS_MODE == MODE_SPI
     },
@@ -190,16 +246,31 @@ static const spi_conf_t spi_config[] = {
     }
 };
 
-#if ACME1_BUS_MODE == MODE_SPI
-#define ACME1_SPI_DEV  SPI_DEV(1)
-#if ACME2_BUS_MODE == MODE_SPI
-#define ACME2_SPI_DEV  SPI_DEV(2)
-#endif
+#if ACME0_BUS_MODE == MODE_SPI
+    #define ACME0_MODE_SPI  MODE_SPI(1)
+    #if ACME1_BUS_MODE == MODE_SPI
+        #define ACME1_MODE_SPI  MODE_SPI(2)
+        #if ACME2_BUS_MODE == MODE_SPI
+            #define ACME2_MODE_SPI  MODE_SPI(3)
+        #endif
+    #else
+        #if ACME2_BUS_MODE == MODE_SPI
+            #define ACME2_MODE_SPI  MODE_SPI(2)
+        #endif
+    #endif
 #else
-#if ACME2_BUS_MODE == MODE_SPI
-#define ACME2_SPI_DEV  SPI_DEV(1)
+    #if ACME1_BUS_MODE == MODE_SPI
+        #define ACME1_MODE_SPI  MODE_SPI(1)
+        #if ACME2_BUS_MODE == MODE_SPI
+            #define ACME2_MODE_SPI  MODE_SPI(2)
+        #endif
+    #else
+        #if ACME2_BUS_MODE == MODE_SPI
+            #define ACME2_MODE_SPI  MODE_SPI(1)
+        #endif
+    #endif
 #endif
-#endif
+
 
 #define SPI_NUMOF           ARRAY_SIZE(spi_config)
 /** @} */
@@ -243,6 +314,31 @@ static const i2c_conf_t i2c_config[] = {
     }
 #endif
 };
+
+#if ACME0_BUS_MODE == MODE_I2C
+    #define ACME0_I2C_DEV  I2C_DEV(0)
+    #if ACME1_BUS_MODE == MODE_I2C
+        #define ACME1_I2C_DEV  I2C_DEV(1)
+        #if ACME2_BUS_MODE == MODE_I2C
+            #define ACME2_I2C_DEV  I2C_DEV(2)
+        #endif
+    #else
+        #if ACME2_BUS_MODE == MODE_I2C
+            #define ACME2_I2C_DEV  I2C_DEV(1)
+        #endif
+    #endif
+#else
+    #if ACME1_BUS_MODE == MODE_I2C
+        #define ACME1_I2C_DEV  I2C_DEV(0)
+        #if ACME2_BUS_MODE == MODE_I2C
+            #define ACME2_I2C_DEV  I2C_DEV(1)
+        #endif
+    #else
+        #if ACME2_BUS_MODE == MODE_I2C
+            #define ACME2_I2C_DEV  I2C_DEV(0)
+        #endif
+    #endif
+#endif
 
 #define I2C_NUMOF          ARRAY_SIZE(i2c_config)
 /** @} */

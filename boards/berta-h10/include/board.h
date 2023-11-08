@@ -29,27 +29,12 @@ extern "C" {
 #define BTN0_MODE      GPIO_IN_PU
 #endif
 
-#define DEBUG_RX_PIN        GPIO_PIN(PA, 22)
-#define DEBUG_TX_PIN        GPIO_PIN(PA, 23)
-
 #define ACME0_POWER_PIN    GPIO_PIN(PA, 27)
 #define ACME1_POWER_PIN    GPIO_PIN(PA, 28)
 #define ACME2_POWER_PIN    GPIO_PIN(PA, 31)
 
-#ifndef ACME0_POWER
-    #define ACME0_POWER    0
-#endif
-
-#ifndef ACME1_POWER
-    #define ACME1_POWER    0
-#endif
-
-#ifndef ACME2_POWER
-    #define ACME2_POWER    0
-#endif
-
 #ifndef ACME0_POWER_PIN_INITIAL_VALUE
-    #ifdef ACME0_POWER
+    #ifdef ACME0_BUS_MODE
         #define ACME0_POWER_PIN_INITIAL_VALUE 1
     #else
         #define ACME0_POWER_PIN_INITIAL_VALUE 0
@@ -57,7 +42,7 @@ extern "C" {
 #endif
 
 #ifndef ACME1_POWER_PIN_INITIAL_VALUE
-    #ifdef ACME1_POWER
+    #ifdef ACME1_BUS_MODE
         #define ACME1_POWER_PIN_INITIAL_VALUE 1
     #else
         #define ACME1_POWER_PIN_INITIAL_VALUE 0
@@ -65,20 +50,12 @@ extern "C" {
 #endif
 
 #ifndef ACME2_POWER_PIN_INITIAL_VALUE
-    #ifdef ACME2_POWER
+    #ifdef ACME2_BUS_MODE
         #define ACME2_POWER_PIN_INITIAL_VALUE 1
     #else
         #define ACME2_POWER_PIN_INITIAL_VALUE 0
     #endif
 #endif
-
-#ifdef H10_WITH_HDC3020
-#define HDC3020_ENABLE_PIN  ACME0_POWER_PIN
-#define HDC3020_PARAM_I2C   (I2C_DEV(0))
-#endif
-
-#define FRAM_ENABLE_PIN     ACME0_POWER_PIN
-#define FRAM_PARAM_I2C      (I2C_DEV(0))
 
 void board_init(void);
 
