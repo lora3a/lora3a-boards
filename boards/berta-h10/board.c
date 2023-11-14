@@ -31,7 +31,8 @@ void board_init(void)
 #else
     gpio_init(GPIO_PIN(PA, 16), GPIO_IN_PU);
     gpio_init(GPIO_PIN(PA, 17), GPIO_IN_PU);
-    // TODO: Check additional pins
+    gpio_init(GPIO_PIN(PA, 18), GPIO_IN_PU);
+    gpio_init(GPIO_PIN(PA, 19), GPIO_IN_PU);
 #endif
 
 #if defined(ACME1_BUS_MODE)
@@ -44,6 +45,8 @@ void board_init(void)
 #else
     gpio_init(GPIO_PIN(PB, 2), GPIO_IN_PU);
     gpio_init(GPIO_PIN(PB, 3), GPIO_IN_PU);
+    gpio_init(GPIO_PIN(PB, 22), GPIO_IN_PU);
+    gpio_init(GPIO_PIN(PB, 23), GPIO_IN_PU);
 #endif
 
 #if defined(ACME2_BUS_MODE)
@@ -56,5 +59,7 @@ void board_init(void)
 #else
     gpio_init(GPIO_PIN(PA, 4), GPIO_IN_PU);
     gpio_init(GPIO_PIN(PA, 5), GPIO_IN_PU);
+    gpio_init(GPIO_PIN(PA, 6), GPIO_IN_PU);
+    gpio_init(GPIO_PIN(PA, 7), GPIO_IN_PU);
 #endif
 }
