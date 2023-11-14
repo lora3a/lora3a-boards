@@ -10,10 +10,6 @@ DEVELHELP ?= 1
 QUIET ?= 1
 PORT ?= /dev/ttyUSB0
 
-USEMODULE += fmt
-USEMODULE += periph_adc
-USEMODULE += periph_cpuid
-# USEMODULE += periph_spi_reconfigure
 USEMODULE += printf_float
 USEMODULE += saml21_backup_mode
 
