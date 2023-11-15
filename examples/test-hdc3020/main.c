@@ -20,7 +20,7 @@ static saml21_extwake_t extwake = EXTWAKE;
 static hdc3020_t hdc3020;
 
 
-void sensors_read(void)
+void hdc3020_sensor_read(void)
 {
     double temperature, humidity = -999;
 
@@ -42,13 +42,13 @@ void sensors_read(void)
 void wakeup_task(void)
 {
     puts("Wakeup task.");
-    sensors_read();
+    hdc3020_sensor_read();
 }
 
 void periodic_task(void)
 {
     puts("Periodic task.");
-    sensors_read();
+    hdc3020_sensor_read();
 }
 
 int main(void)
@@ -63,7 +63,7 @@ int main(void)
     default:
         printf("\n");
         printf("-------------------------------------\n");
-        printf("-    Test LIS2DW12  For Berta-H10   -\n");
+        printf("-     Test HDC3020 For Berta-H10    -\n");
         printf("-          by Acme Systems          -\n");
         printf("-  Version  : %s              -\n", FW_VERSION);
         printf("-  Compiled : %s %s  -\n", __DATE__, __TIME__);
@@ -76,7 +76,7 @@ int main(void)
         if (SLEEP_TIME > -1) {
             printf("Periodic task running every %d seconds.\n", SLEEP_TIME);
         }
-        sensors_read();
+        hdc3020_sensor_read();
         break;
     }
 

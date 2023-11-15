@@ -23,7 +23,7 @@ static saml21_extwake_t extwake = EXTWAKE;
 static lis2dw12_t lis2dw12;
 
 
-void sensors_read(void)
+void lis2dw12_sensor_read(void)
 {
     float acc_x, acc_y, acc_z, acc_t;
 
@@ -46,13 +46,13 @@ void sensors_read(void)
 void wakeup_task(void)
 {
     puts("Wakeup task.");
-    sensors_read();
+    lis2dw12_sensor_read();
 }
 
 void periodic_task(void)
 {
     puts("Periodic task.");
-    sensors_read();
+    lis2dw12_sensor_read();
 }
 
 
@@ -87,7 +87,7 @@ int main(void)
     }
 
     puts("Entering backup mode.");
-    saml21_backup_mode_enter(0, extwake, SLEEP_TIME, 1);
+    lis2dw12_sensor_read(0, extwake, SLEEP_TIME, 1);
     // never reached
     return 0;
 }

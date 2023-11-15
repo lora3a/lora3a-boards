@@ -23,7 +23,7 @@ static saml21_extwake_t extwake = EXTWAKE;
 static ds18_t ds18;
 
 
-void sensors_read(void)
+void ds18b20_sensor_read(void)
 {
     int16_t temperature;
 
@@ -48,13 +48,13 @@ void sensors_read(void)
 void wakeup_task(void)
 {
     puts("Wakeup task.");
-    sensors_read();
+    ds18b20_sensor_read();
 }
 
 void periodic_task(void)
 {
     puts("Periodic task.");
-    sensors_read();
+    ds18b20_sensor_read();
 }
 
 
@@ -70,7 +70,7 @@ int main(void)
     default:
         printf("\n");
         printf("-------------------------------------\n");
-        printf("-    Test LIS2DW12  For Berta-H10   -\n");
+        printf("-      Test DS18  For Berta-H10     -\n");
         printf("-          by Acme Systems          -\n");
         printf("-  Version  : %s              -\n", FW_VERSION);
         printf("-  Compiled : %s %s  -\n", __DATE__, __TIME__);
@@ -83,7 +83,7 @@ int main(void)
         if (SLEEP_TIME > -1) {
             printf("Periodic task running every %d seconds.\n", SLEEP_TIME);
         }
-        sensors_read();
+        ds18b20_sensor_read();
         break;
     }
 
