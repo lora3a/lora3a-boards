@@ -22,14 +22,20 @@ extern const saul_driver_t hdc3020_saul_temp_driver;
 extern const saul_driver_t hdc3020_saul_hum_driver;
 
 enum {
-    HDC3020_OK        =  0,     /**< everything was fine */
-    HDC3020_ERR_BUS   = -1,     /**< bus error */
-    HDC3020_ERR_NODEV = -2,     /**< did not detect device */
-    HDC3020_ERR_MEAS  = -3,     /**< could not start measure */
+    HDC3020_OK          =  0,   /**< everything was fine */
+    HDC3020_ERR_BUS     = -1,   /**< bus error */
+    HDC3020_ERR_NODEV   = -2,   /**< did not detect device */
+    HDC3020_ERR_MEAS    = -3,   /**< could not start measure */
 };
 
-int hdc3020_init(hdc3020_t* dev, const hdc3020_params_t* params);
+int hdc3020_init(hdc3020_t *dev, const hdc3020_params_t *params);
 int hdc3020_read(const hdc3020_t *dev, double *temp, double *hum);
-void hdc3020_deinit(const hdc3020_t* dev);
+void hdc3020_deinit(const hdc3020_t *dev);
+int hdc3020_deactivate_alert(const hdc3020_t *dev);
+int hdc3020_read_alert(const hdc3020_t *dev,
+                       uint16_t *low_alert, uint16_t *high_alert,
+                       uint16_t *low_alert_relative_humidity, int16_t *low_alert_temperature,
+                       uint16_t *high_alert_relative_humidity, int16_t *high_alert_temperature);
+int hdc3020_set_high_alert(const hdc3020_t *dev, uint16_t relative_humidity, int16_t temperature);
 
 #endif /* HDC3020_H */
