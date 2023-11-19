@@ -28,39 +28,11 @@ void hdc3020_sensor_read(void)
         puts("[SENSOR hdc3020] FAIL INIT.");
         return;
     }
-    uint16_t low_alert = 0, high_alert = 0;
-    uint16_t low_alert_relative_humidity = 0, high_alert_relative_humidity = 0;
-    int16_t low_alert_temperature = 0, high_alert_temperature = 0;
-
-
-    hdc3020_set_high_alert(&hdc3020, 90, -20);
-    hdc3020_read_alert(&hdc3020, &low_alert, &high_alert,
-                       &low_alert_relative_humidity, &low_alert_temperature,
-                       &high_alert_relative_humidity, &high_alert_temperature);
-    printf("[LOW  ALERT]: %d, %d %%, %d °C.\n", low_alert, low_alert_relative_humidity,
-           low_alert_temperature);
-    printf("[HIGH ALERT]: %d, %d %%, %d °C.\n", high_alert, high_alert_relative_humidity,
-           high_alert_temperature);
 
     if (hdc3020_deactivate_alert(&hdc3020) != HDC3020_OK) {
         puts("[SENSOR hdc3020] FAIL DEACTIVATE ALERT.");
         return;
     }
-
-    low_alert = 0;
-    high_alert = 0;
-    low_alert_relative_humidity = 0;
-    high_alert_relative_humidity = 0;
-    low_alert_temperature = 0;
-    high_alert_temperature = 0;
-
-    hdc3020_read_alert(&hdc3020, &low_alert, &high_alert,
-                       &low_alert_relative_humidity, &low_alert_temperature,
-                       &high_alert_relative_humidity, &high_alert_temperature);
-    printf("[LOW  ALERT]: %d, %d %%, %d °C.\n", low_alert, low_alert_relative_humidity,
-           low_alert_temperature);
-    printf("[HIGH ALERT]: %d, %d %%, %d °C.\n", high_alert, high_alert_relative_humidity,
-           high_alert_temperature);
 
     if (hdc3020_read(&hdc3020, &temperature, &humidity) != HDC3020_OK) {
         puts("[SENSOR hdc3020] FAIL READ.");
