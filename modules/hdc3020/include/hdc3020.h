@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2023 ACME
+ *
+ * This file is subject to the terms and conditions of the GNU Lesser
+ * General Public License v2.1. See the file LICENSE in the top level
+ * directory for more details.
+ */
+
+/**
+ * @defgroup    drivers_hdc3020 hdc3020
+ * @ingroup     drivers_sensors
+ * @brief       hdc3020 Drivers
+ *
+ * @{
+ *
+ * @file
+ *
+ */
+
+
+
+
+
+
+
+
 #ifndef HDC3020_H
 #define HDC3020_H
 
@@ -21,6 +47,11 @@ extern "C"
 #define HDC3020_MANUFACTURER_ID (0x3000)
 /** @} */
 
+
+
+/**
+ * @brief   Device initialization parameters
+ */
 typedef struct {
     i2c_t i2c_dev;                      /**< I2C device which is used */
     uint8_t i2c_addr;                   /**< I2C address */
@@ -30,6 +61,9 @@ typedef struct {
     uint32_t measure_delay;
 } hdc3020_params_t;
 
+/**
+ * @brief   Device descriptor for the driver
+ */
 typedef struct {
     hdc3020_params_t params;  /**< Device Parameters */
 } hdc3020_t;
@@ -102,6 +136,19 @@ typedef struct {
     uint8_t checksum_verification : 1;
 }StatusRegister;
 
+
+
+
+
+/**
+ * @brief               Initialize the HDC302X device
+ * @param[out]  dev     Device descriptor to initialized
+ * @param[in]   params  Device initialization parameters
+ *
+ * @return      0       Success
+ * @return      -ENXIO  No HDC3020 device connected to the I2C bus
+ * @return      -ENODEV Device using the foo I2C address is not a HDC3020 device
+ */
 int hdc3020_init(hdc3020_t *dev, const hdc3020_params_t *params);
 void hdc3020_deinit(const hdc3020_t *dev);
 
@@ -180,3 +227,4 @@ int hdc3020_read(const hdc3020_t *dev, double *temp, double *hum);
 #endif
 
 #endif /* HDC3020_H */
+/** @} */

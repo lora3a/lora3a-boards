@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2023 ACME
+ *
+ * This file is subject to the terms and conditions of the GNU Lesser
+ * General Public License v2.1. See the file LICENSE in the top level
+ * directory for more details.
+ */
+
+/**
+ * @ingroup     drivers_hdc3020
+ * @{
+ *
+ * @file
+ * @brief       Device driver implementation for the hdc3020
+ *
+ * @}
+ */
+
 #include <string.h>
 #include <stdio.h>
 #include <inttypes.h>

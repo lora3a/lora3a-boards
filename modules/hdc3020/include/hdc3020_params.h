@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2023 ACME
+ *
+ * This file is subject to the terms and conditions of the GNU Lesser
+ * General Public License v2.1. See the file LICENSE in the top level
+ * directory for more details.
+ */
+
+/**
+ * @ingroup     drivers_hdc3020
+ *
+ * @{
+ * @file
+ * @brief       Default configuration
+ */
+
+
 #ifndef HDC3020_PARAMS_H
 #define HDC3020_PARAMS_H
 
@@ -9,13 +26,23 @@
 extern "C" {
 #endif
 
+/**
+ * @name    Set default I2C Device
+ * @{
+ */
 #ifndef HDC3020_PARAM_I2C_DEV
 #define HDC3020_PARAM_I2C_DEV   I2C_DEV(0)
 #endif
+/**@}*/
 
+/**
+ * @name    Set default I2C Address
+ * @{
+ */
 #ifndef HDC3020_PARAM_I2C_ADDR
 #define HDC3020_PARAM_I2C_ADDR  (CONFIG_HDC1000_I2C_ADDRESS)
 #endif
+/**@}*/
 
 #ifndef HDC3020_ENABLE_PIN
 #define HDC3020_ENABLE_PIN      GPIO_UNDEF
