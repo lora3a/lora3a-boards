@@ -41,28 +41,19 @@ void hdc3020_deinit(const hdc3020_t *dev)
     }
 }
 
-int hdc3020_trigger_on_demand_measurement(const hdc3020_t *dev, int hdc3020_low_power_mode,
+int hdc3020_trigger_on_demand_measurement(const hdc3020_t *dev, uint8_t hdc3020_low_power_mode,
                                           uint16_t *relative_humidity, uint16_t *temperature)
 {
-    int status = 0, retry = 10;
-    uint8_t command[2] = { 0x24, 0x00 };
-    uint8_t data[6];
-
-    switch (hdc3020_low_power_mode) {
-    case 0:
-        break;
-    case 1:
-        command[1] = 0x0B;
-        break;
-    case 2:
-        command[1] = 0x16;
-        break;
-    case 3:
-        command[1] = 0xFF;
-        break;
-    default:
+    if (hdc3020_low_power_mode > HDC3020_MAX_LENGHT_TRIGGER_ON_DEMAND_MODE_MATRIX) {
         return HDC3020_ERR_LOW_POWER_MODE_CONFIG;
     }
+
+    int status = 0, retry = 10;
+    uint8_t command[2] =
+    { hdc3020_trigger_on_demand_mode_matrix[hdc3020_low_power_mode][0],
+      hdc3020_trigger_on_demand_mode_matrix[hdc3020_low_power_mode][1] };
+    uint8_t data[6];
+
 
     i2c_acquire(dev->params.i2c_dev);
 
@@ -105,95 +96,12 @@ int hdc3020_trigger_on_demand_measurement(const hdc3020_t *dev, int hdc3020_low_
 
 int hdc3020_set_auto_measurement_mode(const hdc3020_t *dev, uint8_t auto_measurement_mode)
 {
-    uint8_t command[2] = { 0x00, 0x81 };
-
-    switch (auto_measurement_mode) {
-    case HDC3020_DEFAULT_LPM_MPS:
-        break;
-    case HDC3020_LPM_0_MPS_0_5:
-        command[0] = 0x03;
-        command[1] = 0xB0;
-        break;
-    case HDC3020_LPM_0_MPS_1:
-        command[0] = 0x05;
-        command[1] = 0xD2;
-        break;
-    case HDC3020_LPM_0_MPS_2:
-        command[0] = 0x07;
-        command[1] = 0x74;
-        break;
-    case HDC3020_LPM_0_MPS_4:
-        command[0] = 0x09;
-        command[1] = 0x16;
-        break;
-    case HDC3020_LPM_0_MPS_10:
-        command[0] = 0x0B;
-        command[1] = 0x09;
-        break;
-
-    case HDC3020_LPM_1_MPS_0_5:
-        command[0] = 0x13;
-        command[1] = 0xF3;
-        break;
-    case HDC3020_LPM_1_MPS_1:
-        command[0] = 0x15;
-        command[1] = 0x91;
-        break;
-    case HDC3020_LPM_1_MPS_2:
-        command[0] = 0x17;
-        command[1] = 0x37;
-        break;
-    case HDC3020_LPM_1_MPS_4:
-        command[0] = 0x19;
-        command[1] = 0x55;
-        break;
-    case HDC3020_LPM_1_MPS_10:
-        command[0] = 0x1B;
-        command[1] = 0x4A;
-        break;
-
-    case HDC3020_LPM_2_MPS_0_5:
-        command[0] = 0x23;
-        command[1] = 0x36;
-        break;
-    case HDC3020_LPM_2_MPS_1:
-        command[0] = 0x25;
-        command[1] = 0x54;
-        break;
-    case HDC3020_LPM_2_MPS_2:
-        command[0] = 0x27;
-        command[1] = 0xF2;
-        break;
-    case HDC3020_LPM_2_MPS_4:
-        command[0] = 0x29;
-        command[1] = 0x90;
-        break;
-    case HDC3020_LPM_2_MPS_10:
-        command[0] = 0x2B;
-        command[1] = 0x8F;
-        break;
-
-    case HDC3020_LPM_3_MPS_0_5:
-        command[0] = 0x33;
-        command[1] = 0x75;
-        break;
-    case HDC3020_LPM_3_MPS_1:
-        command[0] = 0x35;
-        command[1] = 0x17;
-        break;
-    case HDC3020_LPM_3_MPS_2:
-        command[0] = 0x37;
-        command[1] = 0xB1;
-        break;
-    case HDC3020_LPM_3_MPS_4:
-        command[0] = 0x39;
-        command[1] = 0xD3;
-        break;
-    case HDC3020_LPM_3_MPS_10:
-        command[0] = 0x3B;
-        command[1] = 0xCC;
-        break;
+    if (auto_measurement_mode > HDC3020_MAX_LENGHT_AUTO_MEASUREMENT_MODE_MATRIX) {
+        return HDC3020_ERR_LOW_POWER_MODE_CONFIG;
     }
+    uint8_t command[2] =
+    { auto_measurement_mode_matrix[auto_measurement_mode][0],
+      auto_measurement_mode_matrix[auto_measurement_mode][1] };
 
     i2c_acquire(dev->params.i2c_dev);
 
@@ -211,7 +119,7 @@ int hdc3020_set_auto_measurement_mode(const hdc3020_t *dev, uint8_t auto_measure
 
 int hdc3020_exit_auto_measurement_mode(const hdc3020_t *dev)
 {
-    uint8_t command[2] = { 0x30, 0x93 };
+    uint8_t command[2] = { HDC3020_AUTO_MEAS_MODE_EXIT_MSB, HDC3020_AUTO_MEAS_MODE_EXIT_LSB };
 
     i2c_acquire(dev->params.i2c_dev);
 
@@ -232,7 +140,7 @@ int hdc3020_auto_measurement_mode_read(const hdc3020_t *dev,
                                        double *temperature, double *relative_humidity )
 {
     int status = 0, retry = 10;
-    uint8_t command[2] = { 0xE0, 0x00 };
+    uint8_t command[2] = { HDC3020_AUTO_MEAS_MODE_READ_MSB, HDC3020_AUTO_MEAS_MODE_READ_LSB };
     uint8_t data[6];
 
     i2c_acquire(dev->params.i2c_dev);
@@ -279,7 +187,7 @@ int hdc3020_minimum_temperature_auto_measurement_mode_read(
     const hdc3020_t *dev, double *minimum_temperature)
 {
     int status = 0, retry = 10;
-    uint8_t command[2] = { 0xE0, 0x01 };
+    uint8_t command[2] = { HDC3020_AUTO_MEAS_MODE_MIN_T_MSB, HDC3020_AUTO_MEAS_MODE_MIN_T_LSB };
     uint8_t data[3];
 
     i2c_acquire(dev->params.i2c_dev);
@@ -321,7 +229,7 @@ int hdc3020_maximum_temperature_auto_measurement_mode_read(
     const hdc3020_t *dev, double *maximum_temperature)
 {
     int status = 0, retry = 10;
-    uint8_t command[2] = { 0xE0, 0x02 };
+    uint8_t command[2] = { HDC3020_AUTO_MEAS_MODE_MAX_T_MSB, HDC3020_AUTO_MEAS_MODE_MAX_T_LSB };
     uint8_t data[3];
 
     i2c_acquire(dev->params.i2c_dev);
@@ -362,7 +270,7 @@ int hdc3020_minimum_relative_humidity_auto_measurement_mode_read(
     const hdc3020_t *dev, double *minimum_relative_humidity)
 {
     int status = 0, retry = 10;
-    uint8_t command[2] = { 0xE0, 0x03 };
+    uint8_t command[2] = { HDC3020_AUTO_MEAS_MODE_MIN_RH_MSB, HDC3020_AUTO_MEAS_MODE_MIN_RH_LSB };
     uint8_t data[3];
 
     i2c_acquire(dev->params.i2c_dev);
@@ -404,7 +312,7 @@ int hdc3020_maximum_relative_humidity_auto_measurement_mode_read(
     const hdc3020_t *dev, double *maximum_relative_humidity)
 {
     int status = 0, retry = 10;
-    uint8_t command[2] = { 0xE0, 0x04 };
+    uint8_t command[2] = { HDC3020_AUTO_MEAS_MODE_MAX_RH_MSB, HDC3020_AUTO_MEAS_MODE_MAX_RH_LSB };
     uint8_t data[3];
 
     i2c_acquire(dev->params.i2c_dev);
@@ -441,34 +349,6 @@ int hdc3020_maximum_relative_humidity_auto_measurement_mode_read(
     return HDC3020_OK;
 }
 
-
-int hdc3020_set_high_alert(const hdc3020_t *dev, double relative_humidity, double temperature)
-{
-    uint16_t relative_humidity_rh3020 = rh_to_rh_hdc3020(relative_humidity);
-    uint16_t temperature_rh3020 = temp_to_temp_hdc3020(temperature);
-
-    uint16_t data = (relative_humidity_rh3020 & 0b1111111000000000)
-                    + ((temperature_rh3020 & 0b1111111110000000) >> 7);
-
-    uint8_t data_unpacked[2] = { (uint8_t)(data >> 8),  (uint8_t)(data & 0x00FF) };
-
-    uint8_t command_set_high_alert[5] =
-    { 0x61, 0x1D, data_unpacked[0], data_unpacked[1],
-      calculateCRC8(data_unpacked, sizeof(data_unpacked)) };
-
-    i2c_acquire(dev->params.i2c_dev);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_set_high_alert, sizeof(command_set_high_alert), 0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    i2c_release(dev->params.i2c_dev);
-
-    return HDC3020_OK;
-}
-
 int hdc3020_set_low_alert(const hdc3020_t *dev, double relative_humidity, double temperature)
 {
     uint16_t relative_humidity_rh3020 = rh_to_rh_hdc3020(relative_humidity);
@@ -483,7 +363,8 @@ int hdc3020_set_low_alert(const hdc3020_t *dev, double relative_humidity, double
     uint8_t data_unpacked[2] = { (uint8_t)(data >> 8),  (uint8_t)(data & 0x00FF) };
 
     uint8_t command_set_low_alert[5] =
-    { 0x61, 0x00, data_unpacked[0], data_unpacked[1],
+    { HDC3020_PROG_THRESHOLDS_SET_LOW_ALERT_MSB, HDC3020_PROG_THRESHOLDS_SET_LOW_ALERT_LSB,
+      data_unpacked[0], data_unpacked[1],
       calculateCRC8(data_unpacked, sizeof(data_unpacked)) };
 
     i2c_acquire(dev->params.i2c_dev);
@@ -499,7 +380,7 @@ int hdc3020_set_low_alert(const hdc3020_t *dev, double relative_humidity, double
     return HDC3020_OK;
 }
 
-int hdc3020_clear_high_alert(const hdc3020_t *dev, double relative_humidity, double temperature)
+int hdc3020_set_high_alert(const hdc3020_t *dev, double relative_humidity, double temperature)
 {
     uint16_t relative_humidity_rh3020 = rh_to_rh_hdc3020(relative_humidity);
     uint16_t temperature_rh3020 = temp_to_temp_hdc3020(temperature);
@@ -510,7 +391,8 @@ int hdc3020_clear_high_alert(const hdc3020_t *dev, double relative_humidity, dou
     uint8_t data_unpacked[2] = { (uint8_t)(data >> 8),  (uint8_t)(data & 0x00FF) };
 
     uint8_t command_set_high_alert[5] =
-    { 0x61, 0x16, data_unpacked[0], data_unpacked[1],
+    { HDC3020_PROG_THRESHOLDS_SET_HIGH_ALERT_MSB, HDC3020_PROG_THRESHOLDS_SET_HIGH_ALERT_LSB,
+      data_unpacked[0], data_unpacked[1],
       calculateCRC8(data_unpacked, sizeof(data_unpacked)) };
 
     i2c_acquire(dev->params.i2c_dev);
@@ -540,7 +422,8 @@ int hdc3020_clear_low_alert(const hdc3020_t *dev, double relative_humidity, doub
     uint8_t data_unpacked[2] = { (uint8_t)(data >> 8),  (uint8_t)(data & 0x00FF) };
 
     uint8_t command_set_low_alert[5] =
-    { 0x61, 0x0B, data_unpacked[0], data_unpacked[1],
+    { HDC3020_PROG_THRESHOLDS_CLEAR_LOW_ALERT_MSB, HDC3020_PROG_THRESHOLDS_CLEAR_LOW_ALERT_LSB,
+      data_unpacked[0], data_unpacked[1],
       calculateCRC8(data_unpacked, sizeof(data_unpacked)) };
 
     i2c_acquire(dev->params.i2c_dev);
@@ -556,9 +439,38 @@ int hdc3020_clear_low_alert(const hdc3020_t *dev, double relative_humidity, doub
     return HDC3020_OK;
 }
 
+int hdc3020_clear_high_alert(const hdc3020_t *dev, double relative_humidity, double temperature)
+{
+    uint16_t relative_humidity_rh3020 = rh_to_rh_hdc3020(relative_humidity);
+    uint16_t temperature_rh3020 = temp_to_temp_hdc3020(temperature);
+
+    uint16_t data = (relative_humidity_rh3020 & 0b1111111000000000)
+                    + ((temperature_rh3020 & 0b1111111110000000) >> 7);
+
+    uint8_t data_unpacked[2] = { (uint8_t)(data >> 8),  (uint8_t)(data & 0x00FF) };
+
+    uint8_t command_set_high_alert[5] =
+    { HDC3020_PROG_THRESHOLDS_CLEAR_HIGH_ALERT_MSB, HDC3020_PROG_THRESHOLDS_CLEAR_HIGH_ALERT_LSB,
+      data_unpacked[0], data_unpacked[1],
+      calculateCRC8(data_unpacked, sizeof(data_unpacked)) };
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command_set_high_alert, sizeof(command_set_high_alert), 0)) {
+        return HDC3020_ERR_MEAS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+}
+
 int hdc3020_transfert_alert_into_nvm(const hdc3020_t *dev)
 {
-    uint8_t command[5] = { 0x61, 0x55 };
+    uint8_t command[5] = { HDC3020_TRANS_ALERT_THRESHOLDS_INTO_NVM_MSB,
+                           HDC3020_TRANS_ALERT_THRESHOLDS_INTO_NVM_LSB };
 
     i2c_acquire(dev->params.i2c_dev);
 
@@ -575,8 +487,15 @@ int hdc3020_transfert_alert_into_nvm(const hdc3020_t *dev)
 
 int hdc3020_deactivate_alert(const hdc3020_t *dev)
 {
-    uint8_t command_set_low_alert[5] = { 0x61, 0x00, 0xFF, 0xFF, 0xAC };
-    uint8_t command_set_high_alert[5] = { 0x61, 0x1D, 0x00, 0x00, 0x81 };
+    uint8_t command_set_low_alert[5] = { HDC3020_PROG_THRESHOLDS_SET_LOW_ALERT_MSB,
+                                         HDC3020_PROG_THRESHOLDS_SET_LOW_ALERT_LSB,
+                                         0xFF, 0xFF,
+                                         0xAC };
+    uint8_t command_set_high_alert[5] = { HDC3020_PROG_THRESHOLDS_SET_HIGH_ALERT_MSB,
+                                          HDC3020_PROG_THRESHOLDS_SET_HIGH_ALERT_LSB,
+                                          0x00, 0x00,
+                                          0x81 };
+
 
     i2c_acquire(dev->params.i2c_dev);
     if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
@@ -596,62 +515,24 @@ int hdc3020_deactivate_alert(const hdc3020_t *dev)
     return HDC3020_OK;
 }
 
-
-int hdc3020_read_alert(const hdc3020_t *dev,
-                       double *low_alert_relative_humidity, double *low_alert_temperature,
-                       double *high_alert_relative_humidity, double *high_alert_temperature)
+int hdc3020_read_set_low_alert(const hdc3020_t *dev,
+                               double *low_alert_relative_humidity, double *low_alert_temperature)
 {
     int status = 0, retry = 10;
-    uint8_t command_read_thresholds_for_set_low_alert[2] =  { 0xe1, 0x02 };
-    uint8_t command_read_thresholds_for_set_high_alert[2] = { 0xe1, 0x1f };
+    uint8_t command[2] = { HDC3020_READ_THRESHOLDS_SET_LOW_ALERT_MSB,
+                           HDC3020_READ_THRESHOLDS_SET_LOW_ALERT_LSB };
     uint8_t data[4];
-
 
     i2c_acquire(dev->params.i2c_dev);
     if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_read_thresholds_for_set_low_alert,
-                        sizeof(command_read_thresholds_for_set_low_alert),
-                        0)) {
+                        command, sizeof(command), 0)) {
         return HDC3020_ERR_MEAS;
     }
     ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
     do {
         status =
-            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr, data,
-                           sizeof(data), 0);
-        if (status) {
-            retry--;
-            if (retry < 0) {
-                return HDC3020_ERR_MEAS;
-            }
-            ztimer_sleep(ZTIMER_USEC, 100);
-        }
-    } while(status);
-
-
-    uint16_t low_alert = (data[0] << 8) + data[1];
-
-    *low_alert_relative_humidity =
-        rh_hdc3020_to_rh(low_alert & 0b1111111000000000);
-    *low_alert_temperature =
-        temp_hdc3020_to_temp((low_alert & 0b0000000111111111) << 7);
-
-
-    status = 0;
-    retry = 10;
-
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_read_thresholds_for_set_high_alert,
-                        sizeof(command_read_thresholds_for_set_high_alert),
-                        0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-    do {
-        status =
-            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr, data,
-                           sizeof(data), 0);
+            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                           data, sizeof(data), 0);
         if (status) {
             retry--;
             if (retry < 0) {
@@ -663,6 +544,44 @@ int hdc3020_read_alert(const hdc3020_t *dev,
 
     i2c_release(dev->params.i2c_dev);
 
+    uint16_t low_alert = (data[0] << 8) + data[1];
+
+    *low_alert_relative_humidity = rh_hdc3020_to_rh(low_alert & 0b1111111000000000);
+    *low_alert_temperature = temp_hdc3020_to_temp((low_alert & 0b0000000111111111) << 7);
+
+    return HDC3020_OK;
+}
+
+int hdc3020_read_set_high_alert(
+    const hdc3020_t *dev,
+    double *high_alert_relative_humidity,
+    double *high_alert_temperature)
+{
+    int status = 0, retry = 10;
+    uint8_t command[2] = { HDC3020_READ_THRESHOLDS_SET_HIGH_ALERT_MSB,
+                           HDC3020_READ_THRESHOLDS_SET_HIGH_ALERT_LSB };
+    uint8_t data[4];
+
+    i2c_acquire(dev->params.i2c_dev);
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command, sizeof(command), 0)) {
+        return HDC3020_ERR_MEAS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+    do {
+        status =
+            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                           data, sizeof(data), 0);
+        if (status) {
+            retry--;
+            if (retry < 0) {
+                return HDC3020_ERR_MEAS;
+            }
+            ztimer_sleep(ZTIMER_USEC, 100);
+        }
+    } while(status);
+    i2c_release(dev->params.i2c_dev);
+
     uint16_t high_alert = (data[0] << 8) + data[1];
 
     *high_alert_relative_humidity = rh_hdc3020_to_rh(high_alert & 0b1111111000000000);
@@ -671,10 +590,32 @@ int hdc3020_read_alert(const hdc3020_t *dev,
     return HDC3020_OK;
 }
 
+int hdc3020_read_set_alert(const hdc3020_t *dev,
+                           double *low_alert_relative_humidity, double *low_alert_temperature,
+                           double *high_alert_relative_humidity, double *high_alert_temperature)
+{
+    int error = 0;
+
+    error = hdc3020_read_set_low_alert(dev, low_alert_relative_humidity, low_alert_temperature);
+
+    if (error != HDC3020_OK) {
+        return error;
+    }
+
+    error = hdc3020_read_set_high_alert(dev, high_alert_relative_humidity, high_alert_temperature);
+
+    if (error != HDC3020_OK) {
+        return error;
+    }
+
+    return HDC3020_OK;
+}
+
 
 int hdc3020_enable_heater(const hdc3020_t *dev)
 {
-    uint8_t command[2] = { 0x30, 0x6D };
+    uint8_t command[2] = { HDC3020_INTEGRETED_HEATER_ENABLE_MSB,
+                           HDC3020_INTEGRETED_HEATER_ENABLE_LSB };
 
     i2c_acquire(dev->params.i2c_dev);
 
@@ -691,7 +632,8 @@ int hdc3020_enable_heater(const hdc3020_t *dev)
 
 int hdc3020_disable_heater(const hdc3020_t *dev)
 {
-    uint8_t command[2] = { 0x30, 0x66 };
+    uint8_t command[2] = { HDC3020_INTEGRETED_HEATER_DISABLE_MSB,
+                           HDC3020_INTEGRETED_HEATER_DISABLE_LSB };
 
     i2c_acquire(dev->params.i2c_dev);
 
@@ -716,7 +658,9 @@ int hdc3020_configure_heater(const hdc3020_t *dev, uint8_t n_heater)
     uint8_t data[2] = { (heater_config >> 8) & 0xFF, (heater_config & 0xFF) };
     uint8_t crc = calculateCRC8(data, sizeof(data) / sizeof(data[0]));
 
-    uint8_t command[5] = { 0x30, 0x6E, data[0], data[1], crc };
+    uint8_t command[5] = { HDC3020_INTEGRETED_HEATER_CONFIGURE_MSB,
+                           HDC3020_INTEGRETED_HEATER_CONFIGURE_LSB,
+                           data[0], data[1], crc };
 
     i2c_acquire(dev->params.i2c_dev);
 
@@ -735,7 +679,8 @@ int hdc3020_configure_heater(const hdc3020_t *dev, uint8_t n_heater)
 int hdc3020_get_status_register(const hdc3020_t *dev, uint16_t *status_register)
 {
     int status = 0, retry = 10;
-    uint8_t command[2] = { 0xF3, 0x2D };
+    uint8_t command[2] = { HDC3020_STATUS_REGISTER_READ_CONTENT_MSB,
+                           HDC3020_STATUS_REGISTER_READ_CONTENT_LSB };
     uint8_t data[3];
 
     i2c_acquire(dev->params.i2c_dev);
@@ -770,7 +715,8 @@ int hdc3020_get_status_register(const hdc3020_t *dev, uint16_t *status_register)
 
 int hdc3020_clear_status_register(const hdc3020_t *dev)
 {
-    uint8_t command[2] = { 0x30, 0x41 };
+    uint8_t command[2] = { HDC3020_STATUS_REGISTER_CLEAR_CONTENT_MSB,
+                           HDC3020_STATUS_REGISTER_CLEAR_CONTENT_LSB };
 
     i2c_acquire(dev->params.i2c_dev);
 
@@ -805,7 +751,8 @@ int hdc3020_set_rh_temp_offset(
 
     uint8_t offset[2] = { rh_offset, temp_offset };
 
-    uint8_t command[5] = { 0xA0, 0x04,
+    uint8_t command[5] = { HDC3020_PROG_READ_TEMP_RH_OFFSET_MSB,
+                           HDC3020_PROG_READ_TEMP_RH_OFFSET_LSB,
                            offset[0], offset[1],
                            calculateCRC8(offset, sizeof(offset) / sizeof(offset[0])) };
 
@@ -824,7 +771,8 @@ int hdc3020_set_rh_temp_offset(
 int hdc3020_get_rh_temp_offset(
     const hdc3020_t *dev, double *relative_humidity_offset, double *temperature_offset)
 {
-    uint8_t command[5] = { 0xA0, 0x04 };
+    uint8_t command[5] = { HDC3020_PROG_READ_TEMP_RH_OFFSET_MSB,
+                           HDC3020_PROG_READ_TEMP_RH_OFFSET_LSB };
     int status = 0, retry = 10;
     uint8_t data[3];
 
@@ -875,7 +823,7 @@ int hdc3020_get_rh_temp_offset(
 
 int hdc3020_soft_reset(const hdc3020_t *dev)
 {
-    uint8_t command[2] = { 0x30, 0xA2 };
+    uint8_t command[2] = { HDC3020_SOFT_RESET_MSB, HDC3020_SOFT_RESET_LSB };
 
     i2c_acquire(dev->params.i2c_dev);
 
@@ -890,7 +838,7 @@ int hdc3020_soft_reset(const hdc3020_t *dev)
 
 int hdc3020_i2c_general_call_reset(const hdc3020_t *dev)
 {
-    uint8_t command[2] = { 0x00, 0x06 };
+    uint8_t command[2] = { HDC3020_GENERAL_RESET_MSB, HDC3020_GENERAL_RESET_LSB };
 
     i2c_acquire(dev->params.i2c_dev);
 
@@ -908,9 +856,12 @@ int hdc3020_read_nist_id(const hdc3020_t *dev, uint8_t data[6])
 {
     int status = 0, retry = 10;
 
-    uint8_t command_read_nist_id_5_4[2] =  { 0x36, 0x83 };
-    uint8_t command_read_nist_id_3_2[2] =  { 0x36, 0x84 };
-    uint8_t command_read_nist_id_1_0[2] =  { 0x36, 0x85 };
+    uint8_t command_read_nist_id_5_4[2] =  { HDC3020_READ_NIST_ID_5_4_BYTES_MSB,
+                                             HDC3020_READ_NIST_ID_5_4_BYTES_LSB };
+    uint8_t command_read_nist_id_3_2[2] =  { HDC3020_READ_NIST_ID_3_2_BYTES_MSB,
+                                             HDC3020_READ_NIST_ID_3_2_BYTES_LSB };
+    uint8_t command_read_nist_id_1_0[2] =  { HDC3020_READ_NIST_ID_1_0_BYTES_MSB,
+                                             HDC3020_READ_NIST_ID_1_0_BYTES_LSB };
 
     uint8_t data_nist_id_5_4[3];
     uint8_t data_nist_id_3_2[3];
@@ -1058,11 +1009,9 @@ int hdc3020_read_manufacturer_id(const hdc3020_t *dev, uint16_t *manufacturer_id
 
 int hdc3020_read(const hdc3020_t *dev, double *temp, double *hum)
 {
-
     uint16_t relative_humidity, temperature = 0;
 
     hdc3020_trigger_on_demand_measurement(dev, 0, &relative_humidity, &temperature);
-
 
     if (temp) {
         *temp = temp_hdc3020_to_temp(temperature);

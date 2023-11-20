@@ -56,30 +56,30 @@ enum {
 };
 
 enum {
-    HDC3020_DEFAULT_LPM_MPS = 0,
-    HDC3020_LPM_0_MPS_0_5,
-    HDC3020_LPM_0_MPS_1,
-    HDC3020_LPM_0_MPS_2,
-    HDC3020_LPM_0_MPS_4,
-    HDC3020_LPM_0_MPS_10,
+    HDC3020_MPS_0_5_LPM_0   = 0,
+    HDC3020_MPS_0_5_LPM_1   = 1,
+    HDC3020_MPS_0_5_LPM_2   = 2,
+    HDC3020_MPS_0_5_LPM_3   = 3,
 
-    HDC3020_LPM_1_MPS_0_5,
-    HDC3020_LPM_1_MPS_1,
-    HDC3020_LPM_1_MPS_2,
-    HDC3020_LPM_1_MPS_4,
-    HDC3020_LPM_1_MPS_10,
+    HDC3020_MPS_1_LPM_0     = 4,
+    HDC3020_MPS_1_LPM_1     = 5,
+    HDC3020_MPS_1_LPM_2     = 6,
+    HDC3020_MPS_1_LPM_3     = 7,
 
-    HDC3020_LPM_2_MPS_0_5,
-    HDC3020_LPM_2_MPS_1,
-    HDC3020_LPM_2_MPS_2,
-    HDC3020_LPM_2_MPS_4,
-    HDC3020_LPM_2_MPS_10,
+    HDC3020_MPS_2_LPM_0     = 8,
+    HDC3020_MPS_2_LPM_1     = 9,
+    HDC3020_MPS_2_LPM_2     = 10,
+    HDC3020_MPS_2_LPM_3     = 11,
 
-    HDC3020_LPM_3_MPS_0_5,
-    HDC3020_LPM_3_MPS_1,
-    HDC3020_LPM_3_MPS_2,
-    HDC3020_LPM_3_MPS_4,
-    HDC3020_LPM_3_MPS_10,
+    HDC3020_MPS_4_LPM_0     = 12,
+    HDC3020_MPS_4_LPM_1     = 13,
+    HDC3020_MPS_4_LPM_2     = 14,
+    HDC3020_MPS_4_LPM_3     = 15,
+
+    HDC3020_MPS_10_LPM_0    = 16,
+    HDC3020_MPS_10_LPM_1    = 17,
+    HDC3020_MPS_10_LPM_2    = 18,
+    HDC3020_MPS_10_LPM_3    = 19,
 };
 
 enum {
@@ -106,7 +106,7 @@ int hdc3020_init(hdc3020_t *dev, const hdc3020_params_t *params);
 void hdc3020_deinit(const hdc3020_t *dev);
 
 int hdc3020_trigger_on_demand_measurement(
-    const hdc3020_t *dev, int hdc3020_low_power_mode,
+    const hdc3020_t *dev, uint8_t hdc3020_low_power_mode,
     uint16_t *relative_humidity, uint16_t *temperature);
 
 int hdc3020_set_auto_measurement_mode(
