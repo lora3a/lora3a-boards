@@ -14,7 +14,7 @@ extern "C" {
 #endif
 
 #ifndef HDC3020_PARAM_I2C_ADDR
-#define HDC3020_PARAM_I2C_ADDR  0x44
+#define HDC3020_PARAM_I2C_ADDR  (CONFIG_HDC1000_I2C_ADDRESS)
 #endif
 
 #ifndef HDC3020_ENABLE_PIN
@@ -34,14 +34,14 @@ extern "C" {
 #endif
 
 #ifndef HDC3020_PARAMS
-#define HDC3020_PARAMS                           \
-    {                                            \
-        .i2c_dev       = HDC3020_PARAM_I2C_DEV,  \
-        .i2c_addr      = HDC3020_PARAM_I2C_ADDR, \
-        .enable_pin    = HDC3020_ENABLE_PIN,     \
-        .enable_on     = HDC3020_ENABLE_ON,      \
-        .start_delay   = HDC3020_START_DELAY,    \
-        .measure_delay = HDC3020_MEAS_DELAY,     \
+#define HDC3020_PARAMS                          \
+    {                                           \
+        .i2c_dev = HDC3020_PARAM_I2C_DEV,       \
+        .i2c_addr = HDC3020_PARAM_I2C_ADDR,     \
+        .enable_pin = HDC3020_ENABLE_PIN,       \
+        .enable_on = HDC3020_ENABLE_ON,         \
+        .start_delay = HDC3020_START_DELAY,     \
+        .measure_delay = HDC3020_MEAS_DELAY,    \
     }
 #endif
 

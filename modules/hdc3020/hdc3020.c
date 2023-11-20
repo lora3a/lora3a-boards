@@ -9,6 +9,7 @@
 
 #include "hdc3020.h"
 #include "hdc3020_utils.h"
+#include "hdc3020_regs.h"
 
 
 int hdc3020_init(hdc3020_t *dev, const hdc3020_params_t *params)
@@ -21,7 +22,14 @@ int hdc3020_init(hdc3020_t *dev, const hdc3020_params_t *params)
         gpio_write(dev->params.enable_pin, dev->params.enable_on);
         ztimer_sleep(ZTIMER_USEC, dev->params.start_delay);
     }
-    // TODO: check for sensor
+
+    uint16_t manufacturer_id = 0;
+
+    hdc3020_read_manufacturer_id(dev, &manufacturer_id);
+
+    if (manufacturer_id != HDC3020_MANUFACTURER_ID) {
+        return HDC3020_ERR_NODEV;
+    }
 
     return HDC3020_OK;
 }
@@ -33,473 +41,8 @@ void hdc3020_deinit(const hdc3020_t *dev)
     }
 }
 
-
-
-int hdc3020_read(const hdc3020_t *dev, double *temp, double *hum)
-{
-    int status = 0, retry = 10;
-    uint8_t command[2] = { 0x24, 0x00 };
-    uint8_t data[6];
-
-    i2c_acquire(dev->params.i2c_dev);
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr, command, sizeof(command), 0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-    do {
-        status = i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr, data, sizeof(data), 0);
-        if (status) {
-            retry--;
-            if (retry < 0) {
-                return HDC3020_ERR_MEAS;
-            }
-            ztimer_sleep(ZTIMER_USEC, 100);
-        }
-    } while(status);
-
-    i2c_release(dev->params.i2c_dev);
-
-    if (temp) {
-        *temp = ((data[0] << 8) + data[1]) * 175. / (1 << 16) - 45;
-    }
-    if (hum) {
-        *hum =  ((data[3] << 8) + data[4]) * 100. / (1 << 16);
-    }
-    return HDC3020_OK;
-}
-
-int hdc3020_deactivate_alert(const hdc3020_t *dev)
-{
-    uint8_t command_set_low_alert[5] = { 0x61, 0x00, 0xFF, 0xFF, 0xAC };
-    uint8_t command_set_high_alert[5] = { 0x61, 0x1D, 0x00, 0x00, 0x81 };
-
-    i2c_acquire(dev->params.i2c_dev);
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_set_low_alert, sizeof(command_set_low_alert), 0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_set_high_alert, sizeof(command_set_high_alert), 0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    i2c_release(dev->params.i2c_dev);
-
-    return HDC3020_OK;
-}
-
-int hdc3020_set_high_alert(const hdc3020_t *dev, double relative_humidity, double temperature)
-{
-    uint16_t relative_humidity_rh3020 = rh_to_rh_hdc3020(relative_humidity);
-    uint16_t temperature_rh3020 = temp_to_temp_hdc3020(temperature);
-
-    uint16_t data = (relative_humidity_rh3020 & 0b1111111000000000)
-                    + ((temperature_rh3020 & 0b1111111110000000) >> 7);
-
-    uint8_t data_unpacked[2] = { (uint8_t)(data >> 8),  (uint8_t)(data & 0x00FF) };
-
-    uint8_t command_set_high_alert[5] =
-    { 0x61, 0x1D, data_unpacked[0], data_unpacked[1],
-      calculateCRC8(data_unpacked, sizeof(data_unpacked)) };
-
-    i2c_acquire(dev->params.i2c_dev);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_set_high_alert, sizeof(command_set_high_alert), 0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    i2c_release(dev->params.i2c_dev);
-
-    return HDC3020_OK;
-}
-
-int hdc3020_set_low_alert(const hdc3020_t *dev, double relative_humidity, double temperature)
-{
-    uint16_t relative_humidity_rh3020 = rh_to_rh_hdc3020(relative_humidity);
-    uint16_t temperature_rh3020 = temp_to_temp_hdc3020(temperature);
-
-    uint16_t low_alert_relative_humidity_bit_mask = 0b1111111000000000;
-    uint16_t low_alert_temperature_bit_mask =       0b1111111110000000;
-
-    uint16_t data = (relative_humidity_rh3020 & low_alert_relative_humidity_bit_mask)
-                    + ((temperature_rh3020 & low_alert_temperature_bit_mask) >> 7);
-
-    uint8_t data_unpacked[2] = { (uint8_t)(data >> 8),  (uint8_t)(data & 0x00FF) };
-
-    uint8_t command_set_low_alert[5] =
-    { 0x61, 0x00, data_unpacked[0], data_unpacked[1],
-      calculateCRC8(data_unpacked, sizeof(data_unpacked)) };
-
-    i2c_acquire(dev->params.i2c_dev);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_set_low_alert, sizeof(command_set_low_alert), 0)) {
-        return HDC3020_ERR_BUS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    i2c_release(dev->params.i2c_dev);
-
-    return HDC3020_OK;
-}
-
-int hdc3020_clear_high_alert(const hdc3020_t *dev, double relative_humidity, double temperature)
-{
-    uint16_t relative_humidity_rh3020 = rh_to_rh_hdc3020(relative_humidity);
-    uint16_t temperature_rh3020 = temp_to_temp_hdc3020(temperature);
-
-    uint16_t data = (relative_humidity_rh3020 & 0b1111111000000000)
-                    + ((temperature_rh3020 & 0b1111111110000000) >> 7);
-
-    uint8_t data_unpacked[2] = { (uint8_t)(data >> 8),  (uint8_t)(data & 0x00FF) };
-
-    uint8_t command_set_high_alert[5] =
-    { 0x61, 0x16, data_unpacked[0], data_unpacked[1],
-      calculateCRC8(data_unpacked, sizeof(data_unpacked)) };
-
-    i2c_acquire(dev->params.i2c_dev);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_set_high_alert, sizeof(command_set_high_alert), 0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    i2c_release(dev->params.i2c_dev);
-
-    return HDC3020_OK;
-}
-
-int hdc3020_clear_low_alert(const hdc3020_t *dev, double relative_humidity, double temperature)
-{
-    uint16_t relative_humidity_rh3020 = rh_to_rh_hdc3020(relative_humidity);
-    uint16_t temperature_rh3020 = temp_to_temp_hdc3020(temperature);
-
-    uint16_t low_alert_relative_humidity_bit_mask = 0b1111111000000000;
-    uint16_t low_alert_temperature_bit_mask =       0b1111111110000000;
-
-    uint16_t data = (relative_humidity_rh3020 & low_alert_relative_humidity_bit_mask)
-                    + ((temperature_rh3020 & low_alert_temperature_bit_mask) >> 7);
-
-    uint8_t data_unpacked[2] = { (uint8_t)(data >> 8),  (uint8_t)(data & 0x00FF) };
-
-    uint8_t command_set_low_alert[5] =
-    { 0x61, 0x0B, data_unpacked[0], data_unpacked[1],
-      calculateCRC8(data_unpacked, sizeof(data_unpacked)) };
-
-    i2c_acquire(dev->params.i2c_dev);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_set_low_alert, sizeof(command_set_low_alert), 0)) {
-        return HDC3020_ERR_BUS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    i2c_release(dev->params.i2c_dev);
-
-    return HDC3020_OK;
-}
-
-int hdc3020_transfert_alert_into_nvm(const hdc3020_t *dev)
-{
-    uint8_t command[5] = { 0x61, 0x55 };
-
-    i2c_acquire(dev->params.i2c_dev);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command, sizeof(command), 0)) {
-        return HDC3020_ERR_BUS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    i2c_release(dev->params.i2c_dev);
-
-    return HDC3020_OK;
-}
-
-int hdc3020_enable_heater(const hdc3020_t *dev)
-{
-    uint8_t command[2] = { 0x30, 0x6D };
-
-    i2c_acquire(dev->params.i2c_dev);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command, sizeof(command) / sizeof(command[0]), 0)) {
-        return HDC3020_ERR_BUS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    i2c_release(dev->params.i2c_dev);
-
-    return HDC3020_OK;
-}
-
-int hdc3020_disable_heater(const hdc3020_t *dev)
-{
-    uint8_t command[2] = { 0x30, 0x66 };
-
-    i2c_acquire(dev->params.i2c_dev);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command, sizeof(command) / sizeof(command[0]), 0)) {
-        return HDC3020_ERR_BUS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    i2c_release(dev->params.i2c_dev);
-
-    return HDC3020_OK;
-}
-
-int hdc3020_configure_heater(const hdc3020_t *dev, uint8_t n_heater)
-{
-    if (n_heater < 1 || n_heater > 14) {
-        return HDC3020_ERR_HEATER_CONFIG;
-    }
-
-    uint16_t heater_config = (1 << n_heater) - 1;
-    uint8_t data[2] = { (heater_config >> 8) & 0xFF, (heater_config & 0xFF) };
-    uint8_t crc = calculateCRC8(data, sizeof(data) / sizeof(data[0]));
-
-    uint8_t command[5] = { 0x30, 0x6E, data[0], data[1], crc };
-
-    i2c_acquire(dev->params.i2c_dev);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command, sizeof(command) / sizeof(command[0]), 0)) {
-        return HDC3020_ERR_BUS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    i2c_release(dev->params.i2c_dev);
-
-    return HDC3020_OK;
-}
-
-int hdc3020_read_alert(const hdc3020_t *dev,
-                       double *low_alert_relative_humidity, double *low_alert_temperature,
-                       double *high_alert_relative_humidity, double *high_alert_temperature)
-{
-    int status = 0, retry = 10;
-    uint8_t command_read_thresholds_for_set_low_alert[2] =  { 0xe1, 0x02 };
-    uint8_t command_read_thresholds_for_set_high_alert[2] = { 0xe1, 0x1f };
-    uint8_t data[4];
-
-
-    i2c_acquire(dev->params.i2c_dev);
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_read_thresholds_for_set_low_alert,
-                        sizeof(command_read_thresholds_for_set_low_alert),
-                        0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-    do {
-        status =
-            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr, data,
-                           sizeof(data), 0);
-        if (status) {
-            retry--;
-            if (retry < 0) {
-                return HDC3020_ERR_MEAS;
-            }
-            ztimer_sleep(ZTIMER_USEC, 100);
-        }
-    } while(status);
-
-
-    uint16_t low_alert = (data[0] << 8) + data[1];
-
-    *low_alert_relative_humidity =
-        rh_hdc3020_to_rh(low_alert & 0b1111111000000000);
-    *low_alert_temperature =
-        temp_hdc3020_to_temp((low_alert & 0b0000000111111111) << 7);
-
-
-    status = 0;
-    retry = 10;
-
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_read_thresholds_for_set_high_alert,
-                        sizeof(command_read_thresholds_for_set_high_alert),
-                        0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-    do {
-        status =
-            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr, data,
-                           sizeof(data), 0);
-        if (status) {
-            retry--;
-            if (retry < 0) {
-                return HDC3020_ERR_MEAS;
-            }
-            ztimer_sleep(ZTIMER_USEC, 100);
-        }
-    } while(status);
-
-    i2c_release(dev->params.i2c_dev);
-
-    uint16_t high_alert = (data[0] << 8) + data[1];
-
-    *high_alert_relative_humidity = rh_hdc3020_to_rh(high_alert & 0b1111111000000000);
-    *high_alert_temperature = temp_hdc3020_to_temp((high_alert & 0b0000000111111111) << 7);
-
-    return HDC3020_OK;
-}
-
-int hdc3020_read_nist_id(const hdc3020_t *dev, uint8_t data[6])
-{
-    int status = 0, retry = 10;
-
-    uint8_t command_read_nist_id_5_4[2] =  { 0x36, 0x83 };
-    uint8_t command_read_nist_id_3_2[2] =  { 0x36, 0x84 };
-    uint8_t command_read_nist_id_1_0[2] =  { 0x36, 0x85 };
-
-    uint8_t data_nist_id_5_4[3];
-    uint8_t data_nist_id_3_2[3];
-    uint8_t data_nist_id_1_0[3];
-
-    i2c_acquire(dev->params.i2c_dev);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_read_nist_id_5_4,
-                        sizeof(command_read_nist_id_5_4),
-                        0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-    do {
-        status =
-            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                           data_nist_id_5_4, sizeof(data_nist_id_5_4), 0);
-        if (status) {
-            retry--;
-            if (retry < 0) {
-                return HDC3020_ERR_MEAS;
-            }
-            ztimer_sleep(ZTIMER_USEC, 100);
-        }
-
-        if (calculateCRC8(data_nist_id_5_4,
-                          sizeof(data_nist_id_5_4) / sizeof(data_nist_id_5_4[0]) - 1) !=
-            data_nist_id_5_4[2]) {
-            return HDC3020_ERR_CRC_COMPARISON;
-        }
-    } while(status);
-
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_read_nist_id_3_2,
-                        sizeof(command_read_nist_id_3_2),
-                        0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-    do {
-        status =
-            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                           data_nist_id_3_2, sizeof(data_nist_id_3_2), 0);
-        if (status) {
-            retry--;
-            if (retry < 0) {
-                return HDC3020_ERR_MEAS;
-            }
-            ztimer_sleep(ZTIMER_USEC, 100);
-        }
-
-        if (calculateCRC8(data_nist_id_3_2,
-                          sizeof(data_nist_id_3_2) / sizeof(data_nist_id_3_2) - 1) !=
-            data_nist_id_3_2[2]) {
-            return HDC3020_ERR_CRC_COMPARISON;
-        }
-    } while(status);
-
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command_read_nist_id_1_0,
-                        sizeof(command_read_nist_id_1_0),
-                        0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-    do {
-        status =
-            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                           &data_nist_id_1_0[3], sizeof(data_nist_id_1_0), 0);
-        if (status) {
-            retry--;
-            if (retry < 0) {
-                return HDC3020_ERR_MEAS;
-            }
-            ztimer_sleep(ZTIMER_USEC, 100);
-        }
-
-        if (calculateCRC8(data_nist_id_1_0,
-                          sizeof(data_nist_id_1_0) / sizeof(data_nist_id_1_0[0]) - 1) !=
-            data_nist_id_1_0[2]) {
-            return HDC3020_ERR_CRC_COMPARISON;
-        }
-    } while(status);
-
-    i2c_release(dev->params.i2c_dev);
-
-    if (data != NULL) {
-        memcpy(data, (uint8_t[]){
-            data_nist_id_5_4[0], data_nist_id_5_4[1],
-            data_nist_id_3_2[0], data_nist_id_3_2[1],
-            data_nist_id_1_0[0], data_nist_id_1_0[1]
-        }, sizeof(data));
-    }
-    else {
-        return HDC3020_ERR_NULL_POINTER;
-    }
-
-
-    return HDC3020_OK;
-}
-
-int hdc3020_soft_reset(const hdc3020_t *dev)
-{
-    uint8_t command[2] = { 0x30, 0xA2 };
-
-    i2c_acquire(dev->params.i2c_dev);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command, sizeof(command), 0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    i2c_release(dev->params.i2c_dev);
-
-    return HDC3020_OK;
-}
-
-int hdc3020_i2c_general_call_reset(const hdc3020_t *dev)
-{
-    uint8_t command[2] = { 0x00, 0x06 };
-
-    i2c_acquire(dev->params.i2c_dev);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command, sizeof(command), 0)) {
-        return HDC3020_ERR_MEAS;
-    }
-    i2c_release(dev->params.i2c_dev);
-
-    return HDC3020_OK;
-}
-
 int hdc3020_trigger_on_demand_measurement(const hdc3020_t *dev, int hdc3020_low_power_mode,
-                                          double *relative_humidity, double *temperature)
+                                          uint16_t *relative_humidity, uint16_t *temperature)
 {
     int status = 0, retry = 10;
     uint8_t command[2] = { 0x24, 0x00 };
@@ -550,10 +93,10 @@ int hdc3020_trigger_on_demand_measurement(const hdc3020_t *dev, int hdc3020_low_
     i2c_release(dev->params.i2c_dev);
 
     if (temperature) {
-        *temperature = temp_hdc3020_to_temp((data[0] << 8) + data[1]);
+        *temperature = (data[0] << 8) + data[1];
     }
     if (relative_humidity) {
-        *relative_humidity =  rh_hdc3020_to_rh((data[3] << 8) + data[4]);
+        *relative_humidity =  (data[3] << 8) + data[4];
     }
 
     return HDC3020_OK;
@@ -666,6 +209,25 @@ int hdc3020_set_auto_measurement_mode(const hdc3020_t *dev, uint8_t auto_measure
     return HDC3020_OK;
 }
 
+int hdc3020_exit_auto_measurement_mode(const hdc3020_t *dev)
+{
+    uint8_t command[2] = { 0x30, 0x93 };
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command, sizeof(command), 0)) {
+        return HDC3020_ERR_MEAS;
+    }
+
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+
+}
+
 int hdc3020_auto_measurement_mode_read(const hdc3020_t *dev,
                                        double *temperature, double *relative_humidity )
 {
@@ -712,24 +274,6 @@ int hdc3020_auto_measurement_mode_read(const hdc3020_t *dev,
 
 }
 
-int hdc3020_exit_auto_measurement_mode(const hdc3020_t *dev)
-{
-    uint8_t command[2] = { 0x30, 0x93 };
-
-    i2c_acquire(dev->params.i2c_dev);
-
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command, sizeof(command), 0)) {
-        return HDC3020_ERR_MEAS;
-    }
-
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
-
-    i2c_release(dev->params.i2c_dev);
-
-    return HDC3020_OK;
-
-}
 
 int hdc3020_minimum_temperature_auto_measurement_mode_read(
     const hdc3020_t *dev, double *minimum_temperature)
@@ -898,6 +442,349 @@ int hdc3020_maximum_relative_humidity_auto_measurement_mode_read(
 }
 
 
+int hdc3020_set_high_alert(const hdc3020_t *dev, double relative_humidity, double temperature)
+{
+    uint16_t relative_humidity_rh3020 = rh_to_rh_hdc3020(relative_humidity);
+    uint16_t temperature_rh3020 = temp_to_temp_hdc3020(temperature);
+
+    uint16_t data = (relative_humidity_rh3020 & 0b1111111000000000)
+                    + ((temperature_rh3020 & 0b1111111110000000) >> 7);
+
+    uint8_t data_unpacked[2] = { (uint8_t)(data >> 8),  (uint8_t)(data & 0x00FF) };
+
+    uint8_t command_set_high_alert[5] =
+    { 0x61, 0x1D, data_unpacked[0], data_unpacked[1],
+      calculateCRC8(data_unpacked, sizeof(data_unpacked)) };
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command_set_high_alert, sizeof(command_set_high_alert), 0)) {
+        return HDC3020_ERR_MEAS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+}
+
+int hdc3020_set_low_alert(const hdc3020_t *dev, double relative_humidity, double temperature)
+{
+    uint16_t relative_humidity_rh3020 = rh_to_rh_hdc3020(relative_humidity);
+    uint16_t temperature_rh3020 = temp_to_temp_hdc3020(temperature);
+
+    uint16_t low_alert_relative_humidity_bit_mask = 0b1111111000000000;
+    uint16_t low_alert_temperature_bit_mask =       0b1111111110000000;
+
+    uint16_t data = (relative_humidity_rh3020 & low_alert_relative_humidity_bit_mask)
+                    + ((temperature_rh3020 & low_alert_temperature_bit_mask) >> 7);
+
+    uint8_t data_unpacked[2] = { (uint8_t)(data >> 8),  (uint8_t)(data & 0x00FF) };
+
+    uint8_t command_set_low_alert[5] =
+    { 0x61, 0x00, data_unpacked[0], data_unpacked[1],
+      calculateCRC8(data_unpacked, sizeof(data_unpacked)) };
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command_set_low_alert, sizeof(command_set_low_alert), 0)) {
+        return HDC3020_ERR_BUS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+}
+
+int hdc3020_clear_high_alert(const hdc3020_t *dev, double relative_humidity, double temperature)
+{
+    uint16_t relative_humidity_rh3020 = rh_to_rh_hdc3020(relative_humidity);
+    uint16_t temperature_rh3020 = temp_to_temp_hdc3020(temperature);
+
+    uint16_t data = (relative_humidity_rh3020 & 0b1111111000000000)
+                    + ((temperature_rh3020 & 0b1111111110000000) >> 7);
+
+    uint8_t data_unpacked[2] = { (uint8_t)(data >> 8),  (uint8_t)(data & 0x00FF) };
+
+    uint8_t command_set_high_alert[5] =
+    { 0x61, 0x16, data_unpacked[0], data_unpacked[1],
+      calculateCRC8(data_unpacked, sizeof(data_unpacked)) };
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command_set_high_alert, sizeof(command_set_high_alert), 0)) {
+        return HDC3020_ERR_MEAS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+}
+
+int hdc3020_clear_low_alert(const hdc3020_t *dev, double relative_humidity, double temperature)
+{
+    uint16_t relative_humidity_rh3020 = rh_to_rh_hdc3020(relative_humidity);
+    uint16_t temperature_rh3020 = temp_to_temp_hdc3020(temperature);
+
+    uint16_t low_alert_relative_humidity_bit_mask = 0b1111111000000000;
+    uint16_t low_alert_temperature_bit_mask =       0b1111111110000000;
+
+    uint16_t data = (relative_humidity_rh3020 & low_alert_relative_humidity_bit_mask)
+                    + ((temperature_rh3020 & low_alert_temperature_bit_mask) >> 7);
+
+    uint8_t data_unpacked[2] = { (uint8_t)(data >> 8),  (uint8_t)(data & 0x00FF) };
+
+    uint8_t command_set_low_alert[5] =
+    { 0x61, 0x0B, data_unpacked[0], data_unpacked[1],
+      calculateCRC8(data_unpacked, sizeof(data_unpacked)) };
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command_set_low_alert, sizeof(command_set_low_alert), 0)) {
+        return HDC3020_ERR_BUS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+}
+
+int hdc3020_transfert_alert_into_nvm(const hdc3020_t *dev)
+{
+    uint8_t command[5] = { 0x61, 0x55 };
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command, sizeof(command), 0)) {
+        return HDC3020_ERR_BUS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+}
+
+int hdc3020_deactivate_alert(const hdc3020_t *dev)
+{
+    uint8_t command_set_low_alert[5] = { 0x61, 0x00, 0xFF, 0xFF, 0xAC };
+    uint8_t command_set_high_alert[5] = { 0x61, 0x1D, 0x00, 0x00, 0x81 };
+
+    i2c_acquire(dev->params.i2c_dev);
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command_set_low_alert, sizeof(command_set_low_alert), 0)) {
+        return HDC3020_ERR_MEAS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command_set_high_alert, sizeof(command_set_high_alert), 0)) {
+        return HDC3020_ERR_MEAS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+}
+
+
+int hdc3020_read_alert(const hdc3020_t *dev,
+                       double *low_alert_relative_humidity, double *low_alert_temperature,
+                       double *high_alert_relative_humidity, double *high_alert_temperature)
+{
+    int status = 0, retry = 10;
+    uint8_t command_read_thresholds_for_set_low_alert[2] =  { 0xe1, 0x02 };
+    uint8_t command_read_thresholds_for_set_high_alert[2] = { 0xe1, 0x1f };
+    uint8_t data[4];
+
+
+    i2c_acquire(dev->params.i2c_dev);
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command_read_thresholds_for_set_low_alert,
+                        sizeof(command_read_thresholds_for_set_low_alert),
+                        0)) {
+        return HDC3020_ERR_MEAS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+    do {
+        status =
+            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr, data,
+                           sizeof(data), 0);
+        if (status) {
+            retry--;
+            if (retry < 0) {
+                return HDC3020_ERR_MEAS;
+            }
+            ztimer_sleep(ZTIMER_USEC, 100);
+        }
+    } while(status);
+
+
+    uint16_t low_alert = (data[0] << 8) + data[1];
+
+    *low_alert_relative_humidity =
+        rh_hdc3020_to_rh(low_alert & 0b1111111000000000);
+    *low_alert_temperature =
+        temp_hdc3020_to_temp((low_alert & 0b0000000111111111) << 7);
+
+
+    status = 0;
+    retry = 10;
+
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command_read_thresholds_for_set_high_alert,
+                        sizeof(command_read_thresholds_for_set_high_alert),
+                        0)) {
+        return HDC3020_ERR_MEAS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+    do {
+        status =
+            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr, data,
+                           sizeof(data), 0);
+        if (status) {
+            retry--;
+            if (retry < 0) {
+                return HDC3020_ERR_MEAS;
+            }
+            ztimer_sleep(ZTIMER_USEC, 100);
+        }
+    } while(status);
+
+    i2c_release(dev->params.i2c_dev);
+
+    uint16_t high_alert = (data[0] << 8) + data[1];
+
+    *high_alert_relative_humidity = rh_hdc3020_to_rh(high_alert & 0b1111111000000000);
+    *high_alert_temperature = temp_hdc3020_to_temp((high_alert & 0b0000000111111111) << 7);
+
+    return HDC3020_OK;
+}
+
+
+int hdc3020_enable_heater(const hdc3020_t *dev)
+{
+    uint8_t command[2] = { 0x30, 0x6D };
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command, sizeof(command) / sizeof(command[0]), 0)) {
+        return HDC3020_ERR_BUS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+}
+
+int hdc3020_disable_heater(const hdc3020_t *dev)
+{
+    uint8_t command[2] = { 0x30, 0x66 };
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command, sizeof(command) / sizeof(command[0]), 0)) {
+        return HDC3020_ERR_BUS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+}
+
+int hdc3020_configure_heater(const hdc3020_t *dev, uint8_t n_heater)
+{
+    if (n_heater < 1 || n_heater > 14) {
+        return HDC3020_ERR_HEATER_CONFIG;
+    }
+
+    uint16_t heater_config = (1 << n_heater) - 1;
+    uint8_t data[2] = { (heater_config >> 8) & 0xFF, (heater_config & 0xFF) };
+    uint8_t crc = calculateCRC8(data, sizeof(data) / sizeof(data[0]));
+
+    uint8_t command[5] = { 0x30, 0x6E, data[0], data[1], crc };
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command, sizeof(command) / sizeof(command[0]), 0)) {
+        return HDC3020_ERR_BUS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+}
+
+
+int hdc3020_get_status_register(const hdc3020_t *dev, uint16_t *status_register)
+{
+    int status = 0, retry = 10;
+    uint8_t command[2] = { 0xF3, 0x2D };
+    uint8_t data[3];
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command, sizeof(command), 0)) {
+        return HDC3020_ERR_MEAS;
+    }
+
+    do {
+        status = i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                                data, sizeof(data), 0);
+        if (status) {
+            retry--;
+            if (retry < 0) {
+                return HDC3020_ERR_MEAS;
+            }
+            ztimer_sleep(ZTIMER_USEC, 100);
+        }
+
+        if (calculateCRC8(&data[0], (sizeof(data) / sizeof(data[0]) / 2) - 1) != data[2]) {
+            return HDC3020_ERR_CRC_COMPARISON;
+        }
+    } while(status);
+
+    i2c_release(dev->params.i2c_dev);
+
+    *status_register = (data[0] << 8) + data[1];
+
+    return HDC3020_OK;
+}
+
+int hdc3020_clear_status_register(const hdc3020_t *dev)
+{
+    uint8_t command[2] = { 0x30, 0x41 };
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command, sizeof(command), 0)) {
+        return HDC3020_ERR_MEAS;
+    }
+
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+}
+
+
 int hdc3020_set_rh_temp_offset(
     const hdc3020_t *dev, double relative_humidity_offset, double temperature_offset)
 {
@@ -985,11 +872,10 @@ int hdc3020_get_rh_temp_offset(
     return HDC3020_OK;
 }
 
-int hdc3020_get_status_register(const hdc3020_t *dev, uint16_t *status_register)
+
+int hdc3020_soft_reset(const hdc3020_t *dev)
 {
-    int status = 0, retry = 10;
-    uint8_t command[2] = { 0xF3, 0x2D };
-    uint8_t data[3];
+    uint8_t command[2] = { 0x30, 0xA2 };
 
     i2c_acquire(dev->params.i2c_dev);
 
@@ -997,6 +883,155 @@ int hdc3020_get_status_register(const hdc3020_t *dev, uint16_t *status_register)
                         command, sizeof(command), 0)) {
         return HDC3020_ERR_MEAS;
     }
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+}
+
+int hdc3020_i2c_general_call_reset(const hdc3020_t *dev)
+{
+    uint8_t command[2] = { 0x00, 0x06 };
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command, sizeof(command), 0)) {
+        return HDC3020_ERR_MEAS;
+    }
+    i2c_release(dev->params.i2c_dev);
+
+    return HDC3020_OK;
+}
+
+
+int hdc3020_read_nist_id(const hdc3020_t *dev, uint8_t data[6])
+{
+    int status = 0, retry = 10;
+
+    uint8_t command_read_nist_id_5_4[2] =  { 0x36, 0x83 };
+    uint8_t command_read_nist_id_3_2[2] =  { 0x36, 0x84 };
+    uint8_t command_read_nist_id_1_0[2] =  { 0x36, 0x85 };
+
+    uint8_t data_nist_id_5_4[3];
+    uint8_t data_nist_id_3_2[3];
+    uint8_t data_nist_id_1_0[3];
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command_read_nist_id_5_4,
+                        sizeof(command_read_nist_id_5_4),
+                        0)) {
+        return HDC3020_ERR_MEAS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+    do {
+        status =
+            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                           data_nist_id_5_4, sizeof(data_nist_id_5_4), 0);
+        if (status) {
+            retry--;
+            if (retry < 0) {
+                return HDC3020_ERR_MEAS;
+            }
+            ztimer_sleep(ZTIMER_USEC, 100);
+        }
+
+        if (calculateCRC8(data_nist_id_5_4,
+                          sizeof(data_nist_id_5_4) / sizeof(data_nist_id_5_4[0]) - 1) !=
+            data_nist_id_5_4[2]) {
+            return HDC3020_ERR_CRC_COMPARISON;
+        }
+    } while(status);
+
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command_read_nist_id_3_2,
+                        sizeof(command_read_nist_id_3_2),
+                        0)) {
+        return HDC3020_ERR_MEAS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+    do {
+        status =
+            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                           data_nist_id_3_2, sizeof(data_nist_id_3_2), 0);
+        if (status) {
+            retry--;
+            if (retry < 0) {
+                return HDC3020_ERR_MEAS;
+            }
+            ztimer_sleep(ZTIMER_USEC, 100);
+        }
+
+        if (calculateCRC8(data_nist_id_3_2,
+                          sizeof(data_nist_id_3_2) / sizeof(data_nist_id_3_2) - 1) !=
+            data_nist_id_3_2[2]) {
+            return HDC3020_ERR_CRC_COMPARISON;
+        }
+    } while(status);
+
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command_read_nist_id_1_0,
+                        sizeof(command_read_nist_id_1_0),
+                        0)) {
+        return HDC3020_ERR_MEAS;
+    }
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+    do {
+        status =
+            i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                           &data_nist_id_1_0[3], sizeof(data_nist_id_1_0), 0);
+        if (status) {
+            retry--;
+            if (retry < 0) {
+                return HDC3020_ERR_MEAS;
+            }
+            ztimer_sleep(ZTIMER_USEC, 100);
+        }
+
+        if (calculateCRC8(data_nist_id_1_0,
+                          sizeof(data_nist_id_1_0) / sizeof(data_nist_id_1_0[0]) - 1) !=
+            data_nist_id_1_0[2]) {
+            return HDC3020_ERR_CRC_COMPARISON;
+        }
+    } while(status);
+
+    i2c_release(dev->params.i2c_dev);
+
+    if (data != NULL) {
+        memcpy(data, (uint8_t[]){
+            data_nist_id_5_4[0], data_nist_id_5_4[1],
+            data_nist_id_3_2[0], data_nist_id_3_2[1],
+            data_nist_id_1_0[0], data_nist_id_1_0[1]
+        }, 6);
+    }
+    else {
+        return HDC3020_ERR_NULL_POINTER;
+    }
+
+
+    return HDC3020_OK;
+}
+
+
+int hdc3020_read_manufacturer_id(const hdc3020_t *dev, uint16_t *manufacturer_id)
+{
+    int status = 0, retry = 10;
+    uint8_t command[2] = { HDC3020_READ_MANUFACTURER_ID_MSB, HDC3020_READ_MANUFACTURER_ID_LSB };
+    uint8_t data[3];
+
+    i2c_acquire(dev->params.i2c_dev);
+
+    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
+                        command, sizeof(command), 0) != HDC3020_OK) {
+        return HDC3020_ERR_MEAS;
+    }
+
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
 
     do {
         status = i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
@@ -1008,31 +1043,33 @@ int hdc3020_get_status_register(const hdc3020_t *dev, uint16_t *status_register)
             }
             ztimer_sleep(ZTIMER_USEC, 100);
         }
-
-        if (calculateCRC8(&data[0], (sizeof(data) / sizeof(data[0]) / 2) - 1) != data[2]) {
-            return HDC3020_ERR_CRC_COMPARISON;
-        }
     } while(status);
 
     i2c_release(dev->params.i2c_dev);
 
-    *status_register = (data[0] << 8) + data[1];
+    if (calculateCRC8(data, sizeof(data) - 1) != data[2]) {
+        return HDC3020_ERR_CRC_COMPARISON;
+    }
+
+    *manufacturer_id = (data[0] << 8) + data[1];
 
     return HDC3020_OK;
 }
 
-int hdc3020_clear_status_register(const hdc3020_t *dev, uint16_t *status_register)
+int hdc3020_read(const hdc3020_t *dev, double *temp, double *hum)
 {
-    uint8_t command[2] = { 0x30, 0x41 };
 
-    i2c_acquire(dev->params.i2c_dev);
+    uint16_t relative_humidity, temperature = 0;
 
-    if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
-                        command, sizeof(command), 0)) {
-        return HDC3020_ERR_MEAS;
+    hdc3020_trigger_on_demand_measurement(dev, 0, &relative_humidity, &temperature);
+
+
+    if (temp) {
+        *temp = temp_hdc3020_to_temp(temperature);
     }
-
-    i2c_release(dev->params.i2c_dev);
+    if (hum) {
+        *hum =  rh_hdc3020_to_rh(relative_humidity);
+    }
 
     return HDC3020_OK;
 }
