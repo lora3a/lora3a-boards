@@ -32,9 +32,9 @@ typedef enum {
 } saml21_extwake_pin_polarity_t;
 
 typedef enum {
-    EXTWAKE_IN = GPIO_IN,
-    EXTWAKE_IN_PD = GPIO_IN_PD,
-    EXTWAKE_IN_PU = GPIO_IN_PU,
+    EXTWAKE_IN      = GPIO_IN,
+    EXTWAKE_IN_PD   = GPIO_IN_PD,
+    EXTWAKE_IN_PU   = GPIO_IN_PU,
 } saml21_extwake_pin_flags;
 
 typedef struct {
@@ -45,8 +45,18 @@ typedef struct {
 
 saml21_wakeup_cause_t saml21_wakeup_cause(void);
 uint8_t saml21_wakeup_pins(void);
-void saml21_backup_mode_enter(uint8_t RadioOffRequested, saml21_extwake_t extwake, int sleep_secs, uint8_t resetTime);
+void saml21_backup_mode_enter(uint8_t RadioOffRequested, saml21_extwake_t extwake, int sleep_secs,
+                              uint8_t resetTime);
 
 #define RADIO_OFF_NOT_REQUESTED 0
 #define RADIO_OFF_REQUESTED 1
 #endif
+
+/**
+ * @name    Emergency Sleep for Wake Pin Stuck
+ * @{
+ */
+#ifndef EMERGENCY_SLEEP_TIME
+#define EMERGENCY_SLEEP_TIME 30
+#endif
+/** @} */

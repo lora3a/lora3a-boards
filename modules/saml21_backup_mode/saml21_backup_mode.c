@@ -73,57 +73,87 @@ saml21_wakeup_cause_t saml21_wakeup_cause(void)
 uint8_t saml21_wakeup_pins(void)
 {
     uint8_t pins = RSTC->WKCAUSE.reg & 0xff;
+
 #if ENABLE_DEBUG
     printf("Wakeup pins: ");
-    for(int i=0; i<8; i++) {
-        if (pins & (1 << i)) { printf(" PA%02d", i); }
+    for (int i = 0; i < 8; i++) {
+        if (pins & (1 << i)) {
+            printf(" PA%02d", i);
+        }
     }
     printf("\n");
 #endif
     return pins;
 }
 
-void waitCurrentMeasureBM(uint32_t milliseconds, char* step) {
-	printf("waitCurrentMeasure %s\n", step);
-	ztimer_sleep(ZTIMER_MSEC, milliseconds);
+void waitCurrentMeasureBM(uint32_t milliseconds, char *step)
+{
+    printf("waitCurrentMeasure %s\n", step);
+    ztimer_sleep(ZTIMER_MSEC, milliseconds);
 }
 
-void saml21_backup_mode_enter(uint8_t RadioOffRequested, saml21_extwake_t extwake, int sleep_secs, uint8_t resetTime)
+void saml21_backup_mode_enter(uint8_t RadioOffRequested, saml21_extwake_t extwake, int sleep_secs,
+                              uint8_t resetTime)
 {
     uint32_t seconds;
-if (RadioOffRequested) {
-	#ifdef MODULE_SX127X
-		// turn radio off
-		sx127x_t sx127x;
-		sx127x.params = sx127x_params[0];
-		spi_init(sx127x.params.spi);
-	#ifdef TCXO_PWR_PIN
-		gpio_set(TCXO_PWR_PIN);
-	#endif
-		sx127x_init(&sx127x);
-		sx127x_reset(&sx127x);
-		sx127x_set_sleep(&sx127x);
-	#ifdef TCXO_PWR_PIN
-		gpio_clear(TCXO_PWR_PIN);
-	#endif
-	#ifdef TX_OUTPUT_SEL_PIN
-		gpio_clear(TX_OUTPUT_SEL_PIN);
-	#endif
-	#endif
-}
+    uint8_t emergency_sleep = 0;
+
+    if (RadioOffRequested) {
+    #ifdef MODULE_SX127X
+        // turn radio off
+        sx127x_t sx127x;
+        sx127x.params = sx127x_params[0];
+        spi_init(sx127x.params.spi);
+    #ifdef TCXO_PWR_PIN
+        gpio_set(TCXO_PWR_PIN);
+    #endif
+        sx127x_init(&sx127x);
+        sx127x_reset(&sx127x);
+        sx127x_set_sleep(&sx127x);
+    #ifdef TCXO_PWR_PIN
+        gpio_clear(TCXO_PWR_PIN);
+    #endif
+    #ifdef TX_OUTPUT_SEL_PIN
+        gpio_clear(TX_OUTPUT_SEL_PIN);
+    #endif
+    #endif
+    }
     if (extwake.pin != EXTWAKE_NONE) {
         gpio_init(GPIO_PIN(PA, extwake.pin), (gpio_mode_t)extwake.flags);
         // wait for pin to settle
-        while (((PORT->Group[0].IN.reg >> extwake.pin) & 1) != extwake.polarity) {}
-        RSTC->WKEN.reg = 1 << extwake.pin;
-        if (extwake.polarity == EXTWAKE_LOW) {
-            RSTC->WKPOL.reg |= (1 << extwake.pin);
-        } else {
-            RSTC->WKPOL.reg &= ~(1 << extwake.pin);
+        uint8_t retry = 5;
+        while (retry > 0) {
+            retry--;
+            if (((PORT->Group[0].IN.reg >> extwake.pin) & 1) == extwake.polarity) {
+                break;
+            }
+            ztimer_sleep(ZTIMER_MSEC, 10);
         }
-    } else {
+        DEBUG("RETRY EXTWAKE: %d.\n", retry);
+        if (retry == 0) {
+            printf("EXTWAKE PIN STUCK %s.\n",
+                   ((PORT->Group[0].IN.reg >> extwake.pin) & 1) ? "HIGH": "LOW");
+            emergency_sleep = 1;
+            RSTC->WKEN.reg = 0;
+        }
+        else {
+            RSTC->WKEN.reg = 1 << extwake.pin;
+            if (extwake.polarity == EXTWAKE_LOW) {
+                RSTC->WKPOL.reg |= (1 << extwake.pin);
+            }
+            else {
+                RSTC->WKPOL.reg &= ~(1 << extwake.pin);
+            }
+        }
+    }
+    else {
         RSTC->WKEN.reg = 0;
     }
+
+    if (emergency_sleep && sleep_secs <= 0) {
+        sleep_secs = EMERGENCY_SLEEP_TIME;
+    }
+
     if (sleep_secs > 0) {
         seconds = sleep_secs;
 
@@ -131,7 +161,8 @@ if (RadioOffRequested) {
         if (resetTime) {
             rtc_localtime(0, &t);
             rtc_set_time(&t);
-        } else {
+        }
+        else {
             rtc_get_time(&t);
         }
         uint32_t alarm = rtc_mktime(&t) + seconds;
