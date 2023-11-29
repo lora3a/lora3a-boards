@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #ifndef H10ADC_ENABLE_PIN
-#define H10ADC_ENABLE_PIN      GPIO_PIN(PA, 27)
+#define H10ADC_ENABLE_PIN      ACME0_POWER_PIN
 #endif
 
 #ifndef H10ADC_ENABLE_ON
@@ -24,9 +24,9 @@ extern "C" {
 static const h10_adc_params_t h10_adc_params[] =
 {
     {
-        .enable_pin    = H10ADC_ENABLE_PIN,
-        .enable_on     = H10ADC_ENABLE_ON,
-        .start_delay   = H10ADC_START_DELAY,
+        .enable_pin = H10ADC_ENABLE_PIN,
+        .enable_on = H10ADC_ENABLE_ON,
+        .start_delay = H10ADC_START_DELAY,
     },
 };
 
