@@ -41,7 +41,7 @@ int lora_init(const lora_state_t *state)
     netdev_t *netdev = (netdev_t *)&sx127x;
     netdev->event_callback = _lora_event_cb;
     netdev->driver = &sx127x_driver;
-#if defined(BOARD_SAMR34_XPRO) || defined(BOARD_LORA3A_H10)
+#if defined(BOARD_SAMR34_XPRO) || defined(BOARD_LORA3A_H10) || defined(BOARD_BERTA_H10)
     gpio_init(TCXO_PWR_PIN, GPIO_OUT);
     gpio_set(TCXO_PWR_PIN);
     gpio_init(TX_OUTPUT_SEL_PIN, GPIO_OUT);
@@ -89,7 +89,7 @@ void lora_off(void)
     sx127x_set_sleep(&sx127x);
     spi_release(sx127x.params.spi);
     spi_deinit_pins(sx127x.params.spi);
-#if defined(BOARD_SAMR34_XPRO) || defined(BOARD_LORA3A_H10)
+#if defined(BOARD_SAMR34_XPRO) || defined(BOARD_LORA3A_H10) || defined(BOARD_BERTA_H10)
     gpio_clear(TCXO_PWR_PIN);
     gpio_clear(TX_OUTPUT_SEL_PIN);
 #endif
@@ -101,7 +101,7 @@ int lora_write(const iolist_t *packet)
     uint8_t len = iolist_size(packet);
 
     mutex_lock(&lora_transmission_lock);
-#if defined(BOARD_SAMR34_XPRO) || defined(BOARD_LORA3A_H10)
+#if defined(BOARD_SAMR34_XPRO) || defined(BOARD_LORA3A_H10) || defined(BOARD_BERTA_H10)
     printf("boost=%d txpower=%d\n", lora->boost, lora->power);
     // put here the output select pin selection based on persist value
     if (lora->boost) {
