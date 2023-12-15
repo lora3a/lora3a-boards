@@ -64,13 +64,13 @@ void acceleration_mean(accelerometer *acc_mean, accelerometer *acc_data,
     }
 }
 
-void calculate_rotation(rotation_matrix *rot_matrix, accelerometer acc,
+void calculate_rotation(rotation_matrix *rot_matrix, accelerometer *acc,
                         float g_total)
 {
 #define M_PI (3.14159265358979323846)
-    float pitch_ = acc.y_mg / g_total;
-    float roll_ = acc.x_mg / g_total;
-    float yaw_ = acc.z_mg / g_total;
+    float pitch_ = acc->y_mg / g_total;
+    float roll_ = acc->x_mg / g_total;
+    float yaw_ = acc->z_mg / g_total;
 
     rot_matrix->pitch = asin(pitch_) * 180 / M_PI;
     rot_matrix->roll = asin(roll_) * 180 / M_PI;
@@ -128,7 +128,7 @@ void read_accelerometer(lis2dw12_t *dev, rotation_matrix *rotation_matrix)
 
     } while (!ok_variance && retry < MAX_RETRY);
 
-    calculate_rotation(rotation_matrix, acc_mean, g_force);
+    calculate_rotation(rotation_matrix, &acc_mean, g_force);
 
     rotation_matrix_print(rotation_matrix);
 
