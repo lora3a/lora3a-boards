@@ -6,7 +6,7 @@
 
 void board_init(void)
 {
-/* add pullups to UART0 pins */
+    /* add pullups to UART0 pins */
     PORT->Group[PA].PINCFG[22].bit.PULLEN = 1;
     PORT->Group[PA].PINCFG[23].bit.PULLEN = 1;
 
@@ -41,8 +41,8 @@ void board_init(void)
     gpio_write(ACME1_POWER_PIN, ACME1_POWER_PIN_INITIAL_VALUE);
     #endif
 #else
-    gpio_init(GPIO_PIN(PB, 2), GPIO_IN_PU);
-    gpio_init(GPIO_PIN(PB, 3), GPIO_IN_PU);
+    gpio_init(GPIO_PIN(PB,  2), GPIO_IN_PU);
+    gpio_init(GPIO_PIN(PB,  3), GPIO_IN_PU);
     gpio_init(GPIO_PIN(PB, 22), GPIO_IN_PU);
     gpio_init(GPIO_PIN(PB, 23), GPIO_IN_PU);
 #endif
@@ -60,7 +60,4 @@ void board_init(void)
     gpio_init(GPIO_PIN(PA, 6), GPIO_IN_PU);
     gpio_init(GPIO_PIN(PA, 7), GPIO_IN_PU);
 #endif
-
-
-
 }
