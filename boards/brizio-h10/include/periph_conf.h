@@ -2,14 +2,12 @@
 #define PERIPH_CONF_H
 
 #include "periph_cpu.h"
+#include "acme_bus_mode.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define MODE_UART  1
-#define MODE_SPI   2
-#define MODE_I2C   3
 
 /**
  * @brief   GCLK reference speed
