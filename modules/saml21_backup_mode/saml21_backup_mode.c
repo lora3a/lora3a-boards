@@ -108,7 +108,6 @@ void saml21_backup_mode_enter(uint8_t RadioOffRequested, saml21_extwake_t extwak
         gpio_set(TCXO_PWR_PIN);
     #endif
         sx127x_init(&sx127x);
-        sx127x_reset(&sx127x);
         sx127x_set_sleep(&sx127x);
     #ifdef TCXO_PWR_PIN
         gpio_clear(TCXO_PWR_PIN);
