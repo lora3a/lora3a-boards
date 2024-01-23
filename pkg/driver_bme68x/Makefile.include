@@ -1,0 +1,6 @@
+USEPKG_bme68x := $(LAST_MAKEFILEDIR)
+
+INCLUDES += -I$(USEPKG_bme68x)/include
+INCLUDES += -I$(PKGDIRBASE)/driver_bme68x
+
+DIRS += $(USEPKG_bme68x)/contrib

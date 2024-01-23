@@ -1,0 +1,76 @@
+From 0ea0eff4367c6fe7592e92aa2eab4bcd648a535e Mon Sep 17 00:00:00 2001
+From: Antonio Galea <antonio.galea@gmail.com>
+Date: Mon, 22 Jan 2024 13:30:52 +0100
+Subject: [PATCH] [PATCH] reword files and functions
+
+
+diff --git a/bme68x.c b/bme68x_internal.c
+similarity index 99%
+rename from bme68x.c
+rename to bme68x_internal.c
+index cd6965b..f8725a3 100644
+--- a/bme68x.c
++++ b/bme68x_internal.c
+@@ -36,7 +36,7 @@
+ *
+ */
+ 
+-#include "bme68x.h"
++#include "bme68x_internal.h"
+ #include <stdio.h>
+ 
+ /* This internal API is used to read the calibration coefficients */
+@@ -141,7 +141,7 @@ static int8_t analyze_sensor_data(const struct bme68x_data *data, uint8_t n_meas
+ * verify the sensor and also calibrates the sensor
+ * As this API is the entry point, call this API before using other APIs.
+ */
+-int8_t bme68x_init(struct bme68x_dev *dev)
++int8_t bme68x_init_internal(struct bme68x_dev *dev)
+ {
+     int8_t rslt;
+ 
+@@ -746,7 +746,7 @@ int8_t bme68x_selftest_check(const struct bme68x_dev *dev)
+         t_dev.delay_us = dev->delay_us;
+         t_dev.intf_ptr = dev->intf_ptr;
+ 
+-        rslt = bme68x_init(&t_dev);
++        rslt = bme68x_init_internal(&t_dev);
+     }
+ 
+     if (rslt == BME68X_OK)
+diff --git a/bme68x.h b/bme68x_internal.h
+similarity index 98%
+rename from bme68x.h
+rename to bme68x_internal.h
+index 89b58ed..ec9a451 100644
+--- a/bme68x.h
++++ b/bme68x_internal.h
+@@ -42,8 +42,8 @@
+  * and  <a href="https://github.com/BoschSensortec/BME68x-Sensor-API">Sensor API Source Code</a>
+  */
+ 
+-#ifndef BME68X_H_
+-#define BME68X_H_
++#ifndef BME68X_INTERNAL_H_
++#define BME68X_INTERNAL_H_
+ 
+ #include "bme68x_defs.h"
+ 
+@@ -74,7 +74,7 @@ extern "C" {
+  * @retval 0 -> Success
+  * @retval < 0 -> Fail
+  */
+-int8_t bme68x_init(struct bme68x_dev *dev);
++int8_t bme68x_init_internal(struct bme68x_dev *dev);
+ 
+ /**
+  * \ingroup bme68x
+@@ -320,4 +320,4 @@ int8_t bme68x_selftest_check(const struct bme68x_dev *dev);
+ #ifdef __cplusplus
+ }
+ #endif /* End of CPP guard */
+-#endif /* BME68X_H_ */
++#endif /* BME68X_INTERNAL_H_ */
+-- 
+2.39.2
+

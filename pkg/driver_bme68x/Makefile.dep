@@ -1,0 +1,3 @@
+USEMODULE += ztimer
+USEMODULE += ztimer_usec
+USEMODULE += driver_bme68x_contrib
