@@ -1,0 +1,15 @@
+USEPKG += driver_bme68x
+
+ifneq (,$(filter saul%,$(USEMODULE)))
+  USEMODULE += ztimer
+  USEMODULE += ztimer_msec
+endif
+
+ifneq (,$(filter bme68x_i2c,$(USEMODULE)))
+  FEATURES_REQUIRED += periph_i2c
+endif
+
+ifneq (,$(filter bme68x_spi,$(USEMODULE)))
+  FEATURES_REQUIRED += periph_gpio
+  FEATURES_REQUIRED += periph_spi
+endif
