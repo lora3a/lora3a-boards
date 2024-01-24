@@ -50,6 +50,7 @@ int bme68x_init(bme68x_t *dev, const bme68x_params_t *params)
 
     bme68x_devs[bme68x_devs_numof] = dev;
     unsigned int dev_id = bme68x_devs_numof++;
+    DEBUG("\nbme68x_init: dev_id=%d, i2c_dev=%d, addr=0x%02x\n", dev_id, params->intf.i2c.dev, params->intf.i2c.addr);
 
     /* store interface parameters in the device for the HAL functions */
     dev->intf = params->intf;
@@ -60,7 +61,7 @@ int bme68x_init(bme68x_t *dev, const bme68x_params_t *params)
         BME68X_SENSOR(dev).intf = BME68X_I2C_INTF;
         BME68X_SENSOR(dev).read = bme68x_i2c_read_hal;
         BME68X_SENSOR(dev).write = bme68x_i2c_write_hal;
-        BME68X_SENSOR(dev).intf_ptr = (void *)&(bme68x_devs[dev_id]->intf.i2c);
+        BME68X_SENSOR(dev).intf_ptr = (void *)&(dev->intf.i2c);
 #else
         LOG_ERROR("[bme68x]: module bme68x_i2c not enabled\n");
         return BME68X_NO_DEV;
@@ -71,7 +72,7 @@ int bme68x_init(bme68x_t *dev, const bme68x_params_t *params)
         BME68X_SENSOR(dev).intf = BME68X_SPI_INTF;
         BME68X_SENSOR(dev).read = bme68x_spi_read_hal;
         BME68X_SENSOR(dev).write = bme68x_spi_write_hal;
-        BME68X_SENSOR(dev).intf_ptr = (void *)&(bme68x_devs[dev_id]->intf.spi);
+        BME68X_SENSOR(dev).intf_ptr = (void *)&(dev->intf.spi);
         spi_init_cs(params->intf.spi.dev, params->intf.spi.nss_pin);
 #else
         LOG_ERROR("[bme68x]: module bme68x_spi not enabled\n");
