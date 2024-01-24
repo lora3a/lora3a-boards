@@ -5,9 +5,7 @@ PKG_LICENSE=BSD-3-Clause
 
 include $(RIOTBASE)/pkg/pkg.mk
 
-ifneq (,$(filter bme68x_fp,$(USEMODULE)))
-    CFLAGS += -DBME68X_USE_FPU
-else
+ifeq (,$(filter bme68x_fp,$(USEMODULE)))
     CFLAGS += -DBME68X_DO_NOT_USE_FPU
 endif
 
