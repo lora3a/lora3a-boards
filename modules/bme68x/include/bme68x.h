@@ -163,6 +163,15 @@ typedef union {
 } bme68x_intf_t;
 
 /**
+ * @brief   BME68X device configuration
+ */
+typedef struct {
+  uint8_t op_mode;
+  struct bme68x_conf sensors;
+  struct bme68x_heatr_conf heater;
+} bme68x_config_t;
+
+/**
  * @brief   BME68X device initialization parameters
  */
 typedef struct {
@@ -176,6 +185,7 @@ typedef struct {
 typedef struct {
     struct bme68x_dev sensor; /**< Inherited device structure from vendor API */
     bme68x_intf_t intf;       /**< Device interface */
+    bme68x_config_t config;   /**< Configuration */
 } bme68x_t;
 
 /**
@@ -198,6 +208,26 @@ extern unsigned int bme68x_devs_numof;
  * @return < 0 on error
   */
 int bme68x_init(bme68x_t *dev, const bme68x_params_t *params);
+
+/**
+ * @brief   Configure the BME68X sensor for a measure.
+ *
+ * @param[in]       dev     device descriptor of the sensor
+ *
+ * @return 0 on success
+ * @return < 0 on error
+  */
+int bme68x_apply_config(bme68x_t *dev);
+
+/**
+ * @brief   Start measure.
+ *
+ * @param[in]       dev     device descriptor of the sensor
+ *
+ * @return 0 on success
+ * @return < 0 on error
+  */
+int bme68x_start_measure(bme68x_t *dev);
 
 #ifdef __cplusplus
 }

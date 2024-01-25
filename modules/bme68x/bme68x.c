@@ -34,11 +34,10 @@
 #include "periph/spi.h"
 #endif
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
 
 unsigned int bme68x_devs_numof = 0;
-
 bme68x_t *bme68x_devs[BME68X_NUMOF] = { };
 
 int bme68x_init(bme68x_t *dev, const bme68x_params_t *params)
@@ -55,13 +54,14 @@ int bme68x_init(bme68x_t *dev, const bme68x_params_t *params)
     /* store interface parameters in the device for the HAL functions */
     dev->intf = params->intf;
 
+    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
     /* Select device interface and apply needed params */
     if (params->ifsel == BME68X_I2C_INTF) {
 #ifdef MODULE_BME68X_I2C
-        BME68X_SENSOR(dev).intf = BME68X_I2C_INTF;
-        BME68X_SENSOR(dev).read = bme68x_i2c_read_hal;
-        BME68X_SENSOR(dev).write = bme68x_i2c_write_hal;
-        BME68X_SENSOR(dev).intf_ptr = (void *)&(dev->intf.i2c);
+        bme->intf = BME68X_I2C_INTF;
+        bme->read = bme68x_i2c_read_hal;
+        bme->write = bme68x_i2c_write_hal;
+        bme->intf_ptr = (void *)&(dev->intf.i2c);
 #else
         LOG_ERROR("[bme68x]: module bme68x_i2c not enabled\n");
         return BME68X_NO_DEV;
@@ -69,10 +69,10 @@ int bme68x_init(bme68x_t *dev, const bme68x_params_t *params)
     }
     else {
 #ifdef MODULE_BME68X_SPI
-        BME68X_SENSOR(dev).intf = BME68X_SPI_INTF;
-        BME68X_SENSOR(dev).read = bme68x_spi_read_hal;
-        BME68X_SENSOR(dev).write = bme68x_spi_write_hal;
-        BME68X_SENSOR(dev).intf_ptr = (void *)&(dev->intf.spi);
+        bme->intf = BME68X_SPI_INTF;
+        bme->read = bme68x_spi_read_hal;
+        bme->write = bme68x_spi_write_hal;
+        bme->intf_ptr = (void *)&(dev->intf.spi);
         spi_init_cs(params->intf.spi.dev, params->intf.spi.nss_pin);
 #else
         LOG_ERROR("[bme68x]: module bme68x_spi not enabled\n");
@@ -80,14 +80,41 @@ int bme68x_init(bme68x_t *dev, const bme68x_params_t *params)
 #endif
     }
 
-    BME68X_SENSOR(dev).delay_us = bme68x_us_sleep;
+    bme->delay_us = bme68x_us_sleep;
 
     /* call internal bme68x_init from Bosch Sensortech driver */
-    ret = bme68x_init_internal(&BME68X_SENSOR(dev));
+    ret = bme68x_init_internal(bme);
     if (ret != 0) {
         DEBUG("[bme68x]: Failed to get ID\n");
         return ret;
     }
+
+    /* fetch current configuration for sensors */
+    ret = bme68x_get_conf(&dev->config.sensors, bme);
+    if (ret != 0) {
+        DEBUG("[bme68x]: Failed to read sensors configuration\n");
+        return ret;
+    }
+
+    DEBUG("[bme68x]: init done\n");
+    return ret;
+}
+
+int bme68x_apply_config(bme68x_t *dev)
+{
+    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
+    int8_t ret = bme68x_set_conf(&dev->config.sensors, bme);
+    if (ret == BME68X_OK) {
+        ret = bme68x_set_heatr_conf(dev->config.op_mode, &dev->config.heater, bme);
+    }
+
+    return ret;
+}
+
+int bme68x_start_measure(bme68x_t *dev)
+{
+    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
+    int8_t ret = bme68x_set_op_mode(dev->config.op_mode, bme);
 
     return ret;
 }
