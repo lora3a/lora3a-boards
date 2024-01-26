@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2019 Mesotic SAS
  *               2020 Gunar Schorcht
+ *               2024 Antonio Galea
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -16,6 +17,7 @@
  *
  * @author      Dylan Laduranty <dylan.laduranty@mesotic.com>
  * @author      Gunar Schorcht <gunar@schorcht.net>
+ * @author      Antonio Galea <antonio.galea@gmail.com>
  */
 
 #ifndef BME68X_PARAMS_H

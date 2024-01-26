@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2019 Mesotic SAS
  *               2020 Gunar Schorcht
+ *               2024 Antonio Galea
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -20,9 +21,7 @@
  * written and maintained by Bosch Sensortec as a package.
  *
  * Even though this driver interface provides an easy-to-use API, the vendor's
- * driver API can still be used directly. This becomes necessary, for example,
- * if the settings of the ambient temperature have to be updated from
- * measurements with other sensors for gas measurement.
+ * driver API can still be used directly.
  *
  * All functions of the vendor's driver API require a reference to a
  * sensor device structure of type `struct bme68x_dev`. Use macro
@@ -43,41 +42,27 @@
  *
  * ### Sensor Operation Modes
  *
- * The BME68x sensor supports only two modes, sleep mode and forced mode, in
- * which measurements are taken. After the power-on sequence, the sensor
- * automatically starts in sleep mode. To start a measurement, the sensor
- * must switch to forced mode. In this mode it performs exactly one
- * measurement of temperature, pressure, humidity and gas in this order, the
- * so-called TPHG measurement cycle. After executing this TPHG measurement
- * cycle, the raw data from the sensor is available and the sensor
- * automatically returns to sleep mode
+ * The BME68x sensor supports four modes: sleep mode, forced mode,
+ * sequential mode and parallel mode in which measurements are taken.
+ * After the power-on sequence, the sensor automatically starts in sleep mode.
+ * To start a measurement, the sensor must switch to one of the other modes.
  *
- * ### Ambient Temperature
+ * In forced mode it performs exactly one measurement of temperature, pressure,
+ * humidity and as in this order, the so-called TPHG measurement cycle. After
+ * executing this TPHG measurement cycle, the raw data from the sensor is
+ * available and the sensor automatically returns to sleep mode.
  *
- * The sensor is initialized with a fixed ambient temperature defined by the
- * parameter settings in @ref bme68x_params. However, precise gas measurements
- * require the calculation of the heating resistance based on the ambient
- * temperature.
+ * In sequential mode, you can provide a heating profile comprising up to 10
+ * heater steps,(each defined by a target temperature and a duration. The
+ * sensor will make a THPG cycle for each step in the profile, then start
+ * again from the beginning.
  *
- * The temperature of the internal temperature sensor is typically higher
- * than the actual ambient temperature due to the self-heating of the sensor.
- * element. It should therefore not be used to set the ambient temperature
- * unless gas measurements are very infrequent and self-heating is negligible.
- * Rather another temperature sensor should be used for that purpose.
- *
- * Function @ref bme68x_set_ambient_temp can be used to change the ambient
- * temperature.
- *
- * ### Using the Sensor
- *
- * Using the BME68X consists of the following steps
- *
- * 1. Trigger the sensor with @ref bme68x_force_measurement to change to the
- *    forced mode and perform a THPG cycle.
- * 2. Wait at least the time returned by @ref bme68x_get_duration until the
- *    THPG cycle is finished.
- * 3. Use @ref bme68x_get_data to fetch raw sensor data and convert them to the
- *    resulting sensor values
+ * Parallel mode is similar to sequential mode, but the THPG measures will be
+ * done in parallel; thus when reading data one has to check if the measure was
+ * indeed complete, by testing for the following bits in the status byte:
+ *   status & BME68X_NEW_DATA_MSK   - new THP data
+ *   status & BME68X_GASM_VALID_MSK - gas measurement valid
+ *   status & BME68X_HEAT_STAB_MSK  - heater stability reached
  *
  * ### Driver Configuration
  *
@@ -103,6 +88,7 @@
  *
  * @author      Dylan Laduranty <dylan.laduranty@mesotic.com>
  * @author      Gunar Schorcht <gunar@schorcht.net>
+ * @author      Antonio Galea <antonio.galea@gmail.com>
  */
 
 #ifndef BME68X_H
@@ -150,7 +136,7 @@ enum {
 
 /**
  * @brief   Shortcut type definition for BME68X sensor device structure
- * @see [struct bme68x_dev](https://github.com/BoschSensortec/BME68X_driver/blob/9014031fa00a5cc1eea1498c4cd1f94ec4b8ab11/bme68x_defs.h#L496-L530)
+ * @see [struct bme68x_dev](https://github.com/boschsensortec/BME68x-Sensor-API/blob/master/bme68x_defs.h#L919-L969)
  */
 typedef struct bme68x_dev bme68x_dev_t;
 
@@ -190,6 +176,7 @@ typedef struct {
 
 /**
  * @brief   BME68X data type
+ * @see [struct bme68x_dev](https://github.com/boschsensortec/BME68x-Sensor-API/blob/master/bme68x_defs.h#L718-L766)
  */
 typedef struct bme68x_data bme68x_data_t;
 
