@@ -34,7 +34,7 @@
 #include "periph/spi.h"
 #endif
 
-#define ENABLE_DEBUG 1
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 unsigned int bme68x_devs_numof = 0;
@@ -117,4 +117,24 @@ int bme68x_start_measure(bme68x_t *dev)
     int8_t ret = bme68x_set_op_mode(dev->config.op_mode, bme);
 
     return ret;
+}
+
+int bme68x_get_measure_duration(bme68x_t *dev)
+{
+    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
+    int8_t ret = bme68x_get_meas_dur(dev->config.op_mode, &dev->config.sensors, bme);
+    return ret;
+}
+
+int bme68x_get_measure_data(bme68x_t *dev, bme68x_data_t *data, uint8_t *n_data)
+{
+    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
+    int8_t ret = bme68x_get_data(dev->config.op_mode, data, n_data, bme);
+    return ret;
+}
+
+void bme68x_wait_us(bme68x_t *dev, uint32_t del_period)
+{
+    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
+    bme->delay_us(del_period, bme->intf_ptr);
 }

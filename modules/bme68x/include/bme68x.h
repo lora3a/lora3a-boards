@@ -189,6 +189,11 @@ typedef struct {
 } bme68x_t;
 
 /**
+ * @brief   BME68X data type
+ */
+typedef struct bme68x_data bme68x_data_t;
+
+/**
  * @brief   References to BME68X sensor devices used by the HAL functions
  */
 extern bme68x_t *bme68x_devs[];
@@ -228,6 +233,36 @@ int bme68x_apply_config(bme68x_t *dev);
  * @return < 0 on error
   */
 int bme68x_start_measure(bme68x_t *dev);
+
+/**
+ * @brief   Compute measure duration
+ *
+ * @param[in]       dev     device descriptor of the sensor
+ *
+ * @return 0 on success
+ * @return < 0 on error
+  */
+int bme68x_get_measure_duration(bme68x_t *dev);
+
+/**
+ * @brief   Read out measure data
+ *
+ * @param[in]       dev     device descriptor of the sensor
+ * @param[out]      data    measure data
+ * @param[out]      n_data  number of measures
+ *
+ * @return 0 on success
+ * @return < 0 on error
+  */
+int bme68x_get_measure_data(bme68x_t *dev, bme68x_data_t *data, uint8_t *n_data);
+
+/**
+ * @brief   Waiting routine
+ *
+ * @param[in]       dev         device descriptor of the sensor
+ * @param[in]       del_period  delay in microseconds
+  */
+void bme68x_wait_us(bme68x_t *dev, uint32_t del_period);
 
 #ifdef __cplusplus
 }
