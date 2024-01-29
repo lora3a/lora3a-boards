@@ -109,7 +109,6 @@ int bme68x_apply_config(bme68x_t *dev)
     if (ret == BME68X_OK) {
         ret = bme68x_set_heatr_conf(dev->config.op_mode, &dev->config.heater, bme);
     }
-
     return ret;
 }
 
@@ -117,7 +116,6 @@ int bme68x_start_measure(bme68x_t *dev)
 {
     struct bme68x_dev *bme = &BME68X_SENSOR(dev);
     int8_t ret = bme68x_set_op_mode(dev->config.op_mode, bme);
-
     return ret;
 }
 
@@ -139,4 +137,11 @@ void bme68x_wait_us(bme68x_t *dev, uint32_t del_period)
 {
     struct bme68x_dev *bme = &BME68X_SENSOR(dev);
     bme->delay_us(del_period, bme->intf_ptr);
+}
+
+int bme68x_self_test(bme68x_t *dev)
+{
+    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
+    int8_t ret = bme68x_selftest_check(bme);
+    return ret;
 }

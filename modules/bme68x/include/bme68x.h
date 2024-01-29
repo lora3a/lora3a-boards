@@ -251,6 +251,16 @@ int bme68x_get_measure_data(bme68x_t *dev, bme68x_data_t *data, uint8_t *n_data)
   */
 void bme68x_wait_us(bme68x_t *dev, uint32_t del_period);
 
+/**
+ * @brief   Sensor self-test
+ *
+ * @param[in]       dev     device descriptor of the sensor
+ *
+ * @return 0 on success
+ * @return < 0 on error
+  */
+int bme68x_self_test(bme68x_t *dev);
+
 #ifdef __cplusplus
 }
 #endif
