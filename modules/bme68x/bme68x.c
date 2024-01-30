@@ -56,7 +56,7 @@ int bme68x_init(bme68x_t *dev, const bme68x_params_t *params)
     /* store interface parameters in the device for the HAL functions */
     dev->intf = params->intf;
 
-    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
+    bme68x_dev_t *bme = &BME68X_SENSOR(dev);
     /* Select device interface and apply needed params */
     if (params->ifsel == BME68X_I2C_INTF) {
 #ifdef MODULE_BME68X_I2C
@@ -104,7 +104,7 @@ int bme68x_init(bme68x_t *dev, const bme68x_params_t *params)
 
 int bme68x_apply_config(bme68x_t *dev)
 {
-    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
+    bme68x_dev_t *bme = &BME68X_SENSOR(dev);
     int8_t ret = bme68x_set_conf(&dev->config.sensors, bme);
     if (ret == BME68X_OK) {
         ret = bme68x_set_heatr_conf(dev->config.op_mode, &dev->config.heater, bme);
@@ -114,34 +114,34 @@ int bme68x_apply_config(bme68x_t *dev)
 
 int bme68x_start_measure(bme68x_t *dev)
 {
-    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
+    bme68x_dev_t *bme = &BME68X_SENSOR(dev);
     int8_t ret = bme68x_set_op_mode(dev->config.op_mode, bme);
     return ret;
 }
 
 int bme68x_get_measure_duration(bme68x_t *dev)
 {
-    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
+    bme68x_dev_t *bme = &BME68X_SENSOR(dev);
     int8_t ret = bme68x_get_meas_dur(dev->config.op_mode, &dev->config.sensors, bme);
     return ret;
 }
 
 int bme68x_get_measure_data(bme68x_t *dev, bme68x_data_t *data, uint8_t *n_data)
 {
-    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
+    bme68x_dev_t *bme = &BME68X_SENSOR(dev);
     int8_t ret = bme68x_get_data(dev->config.op_mode, data, n_data, bme);
     return ret;
 }
 
 void bme68x_wait_us(bme68x_t *dev, uint32_t del_period)
 {
-    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
+    bme68x_dev_t *bme = &BME68X_SENSOR(dev);
     bme->delay_us(del_period, bme->intf_ptr);
 }
 
 int bme68x_self_test(bme68x_t *dev)
 {
-    struct bme68x_dev *bme = &BME68X_SENSOR(dev);
+    bme68x_dev_t *bme = &BME68X_SENSOR(dev);
     int8_t ret = bme68x_selftest_check(bme);
     return ret;
 }

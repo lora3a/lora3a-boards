@@ -61,7 +61,7 @@ extern "C" {
 #ifndef BME68X_PARAMS_I2C
 #define BME68X_PARAMS_I2C                               \
 {                                                       \
-        .ifsel              = BME68X_I2C_INTF,          \
+        .ifsel          = BME68X_I2C_INTF,              \
         .intf.i2c.dev   = BME68X_PARAM_I2C_DEV,         \
         .intf.i2c.addr  = BME68X_PARAM_I2C_ADDR,        \
 }

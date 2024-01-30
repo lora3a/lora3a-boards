@@ -118,10 +118,16 @@ extern "C" {
 #define BME68X_I2C_ADDR_2   (0x77)
 
 /**
+ * @brief   Shortcut type definition for BME68X sensor device structure
+ * @see [struct bme68x_dev](https://github.com/boschsensortec/BME68x-Sensor-API/blob/master/bme68x_defs.h#L919-L969)
+ */
+typedef struct bme68x_dev bme68x_dev_t;
+
+/**
  * @brief   Converts a BME68X device descriptor to the BME68X sensor device
  *          structure for the vendor BME68X device driver.
  */
-#define BME68X_SENSOR(d)    (*((struct bme68x_dev *)d))
+#define BME68X_SENSOR(d)    (*((bme68x_dev_t *)d))
 
 /**
  * @brief   Named return values
@@ -133,12 +139,6 @@ enum {
     BME68X_INVALID      = -4,   /**< Invalid value or length. */
     BME68X_NO_NEW_DATA  = -5,   /**< No new data. */
 };
-
-/**
- * @brief   Shortcut type definition for BME68X sensor device structure
- * @see [struct bme68x_dev](https://github.com/boschsensortec/BME68x-Sensor-API/blob/master/bme68x_defs.h#L919-L969)
- */
-typedef struct bme68x_dev bme68x_dev_t;
 
 /**
  * @brief   BME68X Hardware interface parameters union
@@ -169,7 +169,7 @@ typedef struct {
  * @brief   BME68X device descriptor
  */
 typedef struct {
-    struct bme68x_dev sensor; /**< Inherited device structure from vendor API */
+    bme68x_dev_t sensor;      /**< Inherited device structure from vendor API */
     bme68x_intf_t intf;       /**< Device interface */
     bme68x_config_t config;   /**< Configuration */
 } bme68x_t;
