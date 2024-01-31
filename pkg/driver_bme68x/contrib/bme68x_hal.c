@@ -29,13 +29,13 @@
 
 #include "ztimer.h"
 
-#ifndef BME68x_SPI_SPEED
-#define BME68x_SPI_SPEED    (SPI_CLK_1MHZ)
-#endif /* BME68x_SPI_SPEED */
+#ifndef BME68X_SPI_SPEED
+#define BME68X_SPI_SPEED    (SPI_CLK_1MHZ)
+#endif /* BME68X_SPI_SPEED */
 
-#ifndef BME68x_SPI_MODE
-#define BME68x_SPI_MODE     (SPI_MODE_0)
-#endif /* BME68x_SPI_MODE */
+#ifndef BME68X_SPI_MODE
+#define BME68X_SPI_MODE     (SPI_MODE_0)
+#endif /* BME68X_SPI_MODE */
 
 void bme68x_us_sleep(uint32_t period, void *intf_ptr)
 {
