@@ -135,7 +135,7 @@ static const uart_conf_t uart_config[] = {
 /* interrupt function name mapping */
 #define UART_0_ISR          isr_sercom3
 
-#if ACME0_BUS_MODE == MODE_I2C
+#if ACME0_BUS_MODE == MODE_UART
     #define UART_1_ISR          isr_sercom1
     #define ACME0_UART_DEV      UART_DEV(1)
 
@@ -284,7 +284,7 @@ static const spi_conf_t spi_config[] = {
  * @{
  */
 static const i2c_conf_t i2c_config[] = {
-#if defined(ACME0_BUS_MODE) && ACME0_BUS_MODE == MODE_I2C
+#if ACME0_BUS_MODE == MODE_I2C
     {
         .dev = &(SERCOM1->I2CM),
         .speed = I2C_SPEED_NORMAL,
@@ -295,7 +295,7 @@ static const i2c_conf_t i2c_config[] = {
         .flags = I2C_FLAG_NONE
     },
 #endif
-#if defined(ACME1_BUS_MODE) && ACME1_BUS_MODE == MODE_I2C
+#if ACME1_BUS_MODE == MODE_I2C
     {
         .dev = &(SERCOM5->I2CM),
         .speed = I2C_SPEED_NORMAL,
@@ -306,7 +306,7 @@ static const i2c_conf_t i2c_config[] = {
         .flags = I2C_FLAG_NONE
     },
 #endif
-#if defined(ACME2_BUS_MODE) && ACME2_BUS_MODE == MODE_I2C
+#if ACME2_BUS_MODE == MODE_I2C
     {
         .dev = &(SERCOM0->I2CM),
         .speed = I2C_SPEED_NORMAL,
