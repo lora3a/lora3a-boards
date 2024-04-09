@@ -1,0 +1,2 @@
+INCLUDES += -I$(PKGDIRBASE)/bosch_bsec_lib/src/inc
+ARCHIVES += $(BINDIR)/libalgobsec.a
