@@ -1,0 +1,2 @@
+USEMODULE_DIR_bosch_bsec := $(LAST_MAKEFILEDIR)
+USEMODULE_INCLUDES += $(USEMODULE_DIR_bosch_bsec)/include
