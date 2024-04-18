@@ -13,6 +13,8 @@ DEVELHELP ?= 1
 QUIET ?= 1
 PORT ?= /dev/ttyUSB0
 
+USEMODULE += od_string
+USEMODULE += ztimer64_usec
 USEMODULE += printf_float
 USEMODULE += bme68x bme68x_i2c bme68x_fp
 USEPKG += bosch_bsec_lib
