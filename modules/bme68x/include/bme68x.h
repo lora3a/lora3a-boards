@@ -202,6 +202,16 @@ extern unsigned int bme68x_devs_numof;
 int bme68x_init(bme68x_t *dev, const bme68x_params_t *params);
 
 /**
+ * @brief   Read the current BME68X configuration from sensor
+ *
+ * @param[in]       dev     device descriptor of the sensor
+ *
+ * @return 0 on success
+ * @return < 0 on error
+  */
+int bme68x_get_config(bme68x_t *dev);
+
+/**
  * @brief   Configure the BME68X sensor for a measure.
  *
  * @param[in]       dev     device descriptor of the sensor
@@ -226,10 +236,9 @@ int bme68x_start_measure(bme68x_t *dev);
  *
  * @param[in]       dev     device descriptor of the sensor
  *
- * @return 0 on success
- * @return < 0 on error
+ * @return measure duration in microseconds
   */
-int bme68x_get_measure_duration(bme68x_t *dev);
+uint32_t bme68x_get_measure_duration(bme68x_t *dev);
 
 /**
  * @brief   Read out measure data

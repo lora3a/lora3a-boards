@@ -92,14 +92,20 @@ int bme68x_init(bme68x_t *dev, const bme68x_params_t *params)
     }
 
     /* fetch current configuration for sensors */
-    ret = bme68x_get_conf(&dev->config.sensors, bme);
-    if (ret != 0) {
+    ret = bme68x_get_config(dev);
+    if (ret != BME68X_OK) {
         DEBUG("[bme68x]: Failed to read sensors configuration\n");
         return ret;
     }
 
     DEBUG("[bme68x]: init done\n");
     return ret;
+}
+
+int bme68x_get_config(bme68x_t *dev)
+{
+    bme68x_dev_t *bme = &BME68X_SENSOR(dev);
+    return bme68x_get_conf(&dev->config.sensors, bme);
 }
 
 int bme68x_apply_config(bme68x_t *dev)
@@ -119,11 +125,10 @@ int bme68x_start_measure(bme68x_t *dev)
     return ret;
 }
 
-int bme68x_get_measure_duration(bme68x_t *dev)
+uint32_t bme68x_get_measure_duration(bme68x_t *dev)
 {
     bme68x_dev_t *bme = &BME68X_SENSOR(dev);
-    int8_t ret = bme68x_get_meas_dur(dev->config.op_mode, &dev->config.sensors, bme);
-    return ret;
+    return bme68x_get_meas_dur(dev->config.op_mode, &dev->config.sensors, bme);
 }
 
 int bme68x_get_measure_data(bme68x_t *dev, bme68x_data_t *data, uint8_t *n_data)
