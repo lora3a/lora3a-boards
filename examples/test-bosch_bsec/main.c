@@ -42,12 +42,12 @@ typedef struct
 	float temperature;
 	float humidity;
 	float static_iaq;
-	float stabStatus;
-	float runInStatus;
+	bool stabStatus;
+	bool runInStatus;
 	float co2_equivalent;
 	float breath_voc_equivalent;
 	float gas_percentage;
-}output_t;
+} output_t;
 
 static bme68x_t dev[BME68X_NUMOF];
 static void *inst[BME68X_NUMOF];
@@ -288,10 +288,10 @@ bsec_library_return_t process_data(int64_t tstamp_ns, bme68x_data_t data, int32_
                     output.humidity = bsec_outputs[index].signal;
                     break;
                 case BSEC_OUTPUT_STABILIZATION_STATUS:
-                    output.stabStatus = bsec_outputs[index].signal;
+                    output.stabStatus = bsec_outputs[index].signal ? 1 : 0;
                     break;
 				case BSEC_OUTPUT_RUN_IN_STATUS:
-                    output.runInStatus = bsec_outputs[index].signal;
+                    output.runInStatus = bsec_outputs[index].signal ? 1 : 0;
                     break;
                 case BSEC_OUTPUT_GAS_PERCENTAGE:
                     output.gas_percentage = bsec_outputs[index].signal;
@@ -305,20 +305,20 @@ bsec_library_return_t process_data(int64_t tstamp_ns, bme68x_data_t data, int32_
 		output.sens_no = i;
         puts("----------------------------------------");
         printf("SENSOR %d\n", output.sens_no);
-        printf("IAQ: %f\n", output.iaq);
+        printf("IAQ: %.2f\n", output.iaq);
         printf("IAQ ACC: %d\n", output.iaq_accuracy);
-        printf("STATIC IAQ: %f\n", output.static_iaq);
-        printf("RAW TEMP: %f\n", output.raw_temp);
-        printf("RAW HUM: %f\n", output.raw_humidity);
-        printf("TEMP: %f\n", output.temperature);
-        printf("HUM: %f\n", output.humidity);
-        printf("PRESS: %f\n", output.raw_pressure);
-        printf("RAW GAS: %f\n", output.raw_gas);
-        printf("RAW GAS %%: %f\n", output.gas_percentage);
-        printf("CO2 EQUIV: %f\n", output.co2_equivalent);
-        printf("BREATH VOC EQUIV: %f\n", output.breath_voc_equivalent);
-        printf("STAB STATUS: %f\n", output.stabStatus);
-        printf("RUN IN STATUS: %f\n", output.runInStatus);
+        printf("STATIC IAQ: %.2f\n", output.static_iaq);
+        printf("RAW TEMP: %.2f\n", output.raw_temp);
+        printf("RAW HUM: %.2f\n", output.raw_humidity);
+        printf("TEMP: %.2f\n", output.temperature);
+        printf("HUM: %.2f\n", output.humidity);
+        printf("PRESS: %.2f\n", output.raw_pressure);
+        printf("RAW GAS: %.2f\n", output.raw_gas);
+        printf("GAS %%: %.2f\n", output.gas_percentage);
+        printf("CO2 EQUIV: %.2f\n", output.co2_equivalent);
+        printf("BREATH VOC EQUIV: %.2f\n", output.breath_voc_equivalent);
+        printf("STAB STATUS: %d\n", output.stabStatus);
+        printf("RUN IN STATUS: %d\n", output.runInStatus);
         printf("BSEC STATUS: %d\n", bsec_status);
         puts("");
     }
