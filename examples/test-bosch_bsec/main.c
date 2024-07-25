@@ -13,6 +13,10 @@
 #include "bsec_selectivity.h"
 #include "bsec_errno.h"
 
+#ifndef BSEC_SAMPLE_RATE
+#define BSEC_SAMPLE_RATE BSEC_SAMPLE_RATE_LP
+#endif
+
 #define BSEC_CHECK_INPUT(x, shift)  (x & (1 << (shift-1)))
 #define BSEC_TOTAL_HEAT_DUR         UINT16_C(140)
 
@@ -77,7 +81,7 @@ bsec_library_return_t setup_for_iaq(void *instance) {
     bsec_sensor_configuration_t virtual_sensors[13];
     bsec_sensor_configuration_t sensor_settings[BSEC_MAX_PHYSICAL_SENSOR];
     uint8_t n_sensor_settings = BSEC_MAX_PHYSICAL_SENSOR;
-    float sample_rate = BSEC_SAMPLE_RATE_LP;
+    float sample_rate = BSEC_SAMPLE_RATE;
 
 	virtual_sensors[0].sensor_id = BSEC_OUTPUT_RAW_PRESSURE;
     virtual_sensors[0].sample_rate = sample_rate;
