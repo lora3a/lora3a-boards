@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "od.h"
+#include "ztimer.h"
 #include "ztimer64.h"
 #include "fram.h"
 #include "bme68x.h"
@@ -10,6 +11,7 @@
 
 #include "bsec_interface_multi.h"
 #include "bsec_selectivity.h"
+#include "bsec_errno.h"
 
 #define BSEC_CHECK_INPUT(x, shift)  (x & (1 << (shift-1)))
 #define BSEC_TOTAL_HEAT_DUR         UINT16_C(140)
@@ -56,7 +58,6 @@ static uint8_t work_buffer[BSEC_MAX_WORKBUFFER_SIZE] = {0};
 static int32_t bsec_config_len;
 static uint8_t bsec_state[BME68X_NUMOF][BSEC_MAX_STATE_BLOB_SIZE] = {0};
 static float temp_offset = 0.0f;
-
 
 uint32_t config_load(uint8_t *config_buffer, uint32_t n_buffer)
 {
@@ -330,7 +331,7 @@ int main(void)
     bsec_version_t version;
     bsec_library_return_t res;
 
-    puts("Bosch BSEC library test");
+    puts("Bosch BSEC library test.");
 
     for (i = 0; i < BME68X_NUMOF; i++) {
         if (bme68x_init(&dev[i], &bme68x_params[i]) != BME68X_OK) {
@@ -342,23 +343,23 @@ int main(void)
             return 1;
         }
         if ((res = bsec_init_m(inst[i])) != BSEC_OK) {
-            printf("[ERROR] Initialization failed for inst[%d]: %d.\n", i, res);
+            printf("[ERROR] Initialization failed for inst[%d]: %s.\n", i, bsec_errno(res));
             return 1;
         }
         bsec_config_len = config_load(bsec_config, sizeof(bsec_config));
         if (bsec_config_len > 0) {
             if ((res = bsec_set_configuration_m(inst[i], bsec_config, bsec_config_len, work_buffer, sizeof(work_buffer))) != BSEC_OK) {
-                printf("[ERROR] Configuration failed for inst[%d]: %d.\n", i, res);
+                printf("[ERROR] Configuration failed for inst[%d]: %s.\n", i, bsec_errno(res));
                 return 1;
             }
         }
         if ((res = bsec_get_version_m(inst[i], &version)) != BSEC_OK) {
-            printf("[ERROR] Read BSEC version failed for inst[%d]: %d.\n", i, res);
+            printf("[ERROR] Read BSEC version failed for inst[%d]: %s.\n", i, bsec_errno(res));
             return 1;
         }
         printf("BSEC version for inst[%d]: %d.%d.%d.%d\n", i, version.major, version.minor, version.major_bugfix, version.minor_bugfix);
         if ((res = setup_for_iaq(inst[i])) != BSEC_OK) {
-            printf("[ERROR] Setup for IAQ failed for inst[%d]: %d.\n", i, res);
+            printf("[ERROR] Setup for IAQ failed for inst[%d]: %s.\n", i, bsec_errno(res));
             return 1;
         }
     }
@@ -376,11 +377,11 @@ int main(void)
         for (i = 0; i < BME68X_NUMOF; i++) {
             res = bsec_set_state_m(inst[i], bsec_state[i], sizeof(bsec_state[i]), work_buffer, sizeof(work_buffer));
             if (res != BSEC_OK) {
-                printf("[ERROR] Restoring BSEC state from FRAM failed for inst[%d]: %d.\n", i, res);
+                printf("[ERROR] Restoring BSEC state from FRAM failed for inst[%d]: %s.\n", i, bsec_errno(res));
                 return 1;
             }
         }
-        puts("BSEC state restored");
+        puts("BSEC state restored.");
     } else {
         fram_erase();
     }
@@ -395,10 +396,10 @@ int main(void)
                 res = bsec_sensor_control_m(inst[i], time_stamp, &sensor_settings[i]);
                 if (res != BSEC_OK) {
                     if (res < BSEC_OK) {
-                        printf("[ERROR] bsec_sensor_control_m for inst[%d]: %d\n", i, res);
+                        printf("[ERROR] bsec_sensor_control_m for inst[%d]: %s.\n", i, bsec_errno(res));
                         return 1;
                     } else {
-                        printf("[WARNING] bsec_sensor_control for inst[%d]: %d\n", i, res);
+                        printf("[WARNING] bsec_sensor_control for inst[%d]: %s.\n", i, bsec_errno(res));
                     }
                 }
                 // configure sensor as dictated
@@ -413,7 +414,7 @@ int main(void)
                         bme68x_data_t data = sensor_data[j];
                         if (data.status & BME68X_GASM_VALID_MSK) {
                             if ((res = process_data(time_stamp, data, sensor_settings[i].process_data, i)) != BSEC_OK) {
-                                printf("[ERROR] process_data failed for inst[%d]: %d\n", i, res);
+                                printf("[ERROR] process_data failed for inst[%d]: %s.\n", i, bsec_errno(res));
                                 return 1;
                             }
                         }
@@ -429,13 +430,15 @@ int main(void)
         for (i = 0; i < BME68X_NUMOF; i++) {
             res = bsec_get_state_m(inst[i], 0, bsec_state[i], sizeof(bsec_state[i]), work_buffer, sizeof(work_buffer), &actual_size);
             if (res != BSEC_OK) {
-                printf("[ERROR] Reading current BSEC state failed for inst[%d]: %d.\n", i, res);
+                printf("[ERROR] Reading current BSEC state failed for inst[%d]: %s.\n", i, bsec_errno(res));
                 return 1;
             }
         }
         magic = BSEC_FRAM_MAGIC;
         fram_write(BSEC_FRAM_MAGIC_OFFSET, &magic, sizeof(magic));
         fram_write(BSEC_FRAM_STATE_OFFSET, (uint8_t *)bsec_state, sizeof(bsec_state));
+
+        ztimer_sleep(ZTIMER_MSEC, 250);
     }
 
     return 0;
