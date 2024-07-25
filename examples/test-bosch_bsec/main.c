@@ -4,6 +4,7 @@
 
 #include "od.h"
 #include "ztimer64.h"
+#include "fram.h"
 #include "bme68x.h"
 #include "bme68x_params.h"
 
@@ -12,6 +13,10 @@
 
 #define BSEC_CHECK_INPUT(x, shift)  (x & (1 << (shift-1)))
 #define BSEC_TOTAL_HEAT_DUR         UINT16_C(140)
+
+#define BSEC_FRAM_MAGIC        42
+#define BSEC_FRAM_MAGIC_OFFSET 0
+#define BSEC_FRAM_STATE_OFFSET 1
 
 typedef struct
 {
@@ -49,7 +54,9 @@ static bme68x_data_t sensor_data[3];
 static uint8_t bsec_config[BSEC_MAX_PROPERTY_BLOB_SIZE] = {0};
 static uint8_t work_buffer[BSEC_MAX_WORKBUFFER_SIZE] = {0};
 static int32_t bsec_config_len;
+static uint8_t bsec_state[BME68X_NUMOF][BSEC_MAX_STATE_BLOB_SIZE] = {0};
 static float temp_offset = 0.0f;
+
 
 uint32_t config_load(uint8_t *config_buffer, uint32_t n_buffer)
 {
@@ -361,6 +368,23 @@ int main(void)
         memset(&sensor_settings[i], 0, sizeof(sensor_settings[i]));
     }
 
+    fram_init();
+    uint8_t magic = 0;
+    fram_read(BSEC_FRAM_MAGIC_OFFSET, &magic, sizeof(magic));
+    if (magic == BSEC_FRAM_MAGIC) {
+        fram_read(BSEC_FRAM_STATE_OFFSET, bsec_state, sizeof(bsec_state));
+        for (i = 0; i < BME68X_NUMOF; i++) {
+            res = bsec_set_state_m(inst[i], bsec_state[i], sizeof(bsec_state[i]), work_buffer, sizeof(work_buffer));
+            if (res != BSEC_OK) {
+                printf("[ERROR] Restoring BSEC state from FRAM failed for inst[%d]: %d.\n", i, res);
+                return 1;
+            }
+        }
+        puts("BSEC state restored");
+    } else {
+        fram_erase();
+    }
+
     puts("Init done.");
 
     while (1) {
@@ -398,6 +422,20 @@ int main(void)
                 }
             }
         }
+
+        // save current library state to FRAM
+        uint32_t actual_size=0;
+        memset(&bsec_state, 0, sizeof(bsec_state));
+        for (i = 0; i < BME68X_NUMOF; i++) {
+            res = bsec_get_state_m(inst[i], 0, bsec_state[i], sizeof(bsec_state[i]), work_buffer, sizeof(work_buffer), &actual_size);
+            if (res != BSEC_OK) {
+                printf("[ERROR] Reading current BSEC state failed for inst[%d]: %d.\n", i, res);
+                return 1;
+            }
+        }
+        magic = BSEC_FRAM_MAGIC;
+        fram_write(BSEC_FRAM_MAGIC_OFFSET, &magic, sizeof(magic));
+        fram_write(BSEC_FRAM_STATE_OFFSET, (uint8_t *)bsec_state, sizeof(bsec_state));
     }
 
     return 0;

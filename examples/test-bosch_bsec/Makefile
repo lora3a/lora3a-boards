@@ -13,6 +13,7 @@ DEVELHELP ?= 1
 QUIET ?= 1
 PORT ?= /dev/ttyUSB0
 
+USEMODULE += fram
 USEMODULE += od_string
 USEMODULE += ztimer64_usec
 USEMODULE += printf_float
