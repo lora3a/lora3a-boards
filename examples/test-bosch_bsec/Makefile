@@ -15,8 +15,8 @@ PORT ?= /dev/ttyUSB0
 
 USEMODULE += fram
 USEMODULE += od_string
-USEMODULE += ztimer_msec
 USEMODULE += ztimer64_usec
+USEMODULE += ztimer_periph_rtc
 USEMODULE += printf_float
 USEMODULE += bme68x bme68x_i2c bme68x_fp
 USEPKG += bosch_bsec_lib

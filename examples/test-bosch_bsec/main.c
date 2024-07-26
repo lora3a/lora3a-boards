@@ -3,7 +3,8 @@
 #include <string.h>
 
 #include "od.h"
-#include "ztimer.h"
+#include "periph/rtc.h"
+#include "rtc_utils.h"
 #include "ztimer64.h"
 #include "fram.h"
 #include "bme68x.h"
@@ -392,9 +393,13 @@ int main(void)
 
     puts("Init done.");
 
+    struct tm time;
+    rtc_get_time(&time);
+    printf("RTC time: %04d-%02d-%02d %02d:%02d:%02d\n", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);
+    uint64_t time_start = rtc_mktime(&time) * 1000000000 - ztimer64_now(ZTIMER64_USEC) * 1000;
     while (1) {
         for (i = 0; i < BME68X_NUMOF; i++) {
-            time_stamp = ztimer64_now(ZTIMER64_USEC) * 1000;
+            time_stamp = ztimer64_now(ZTIMER64_USEC) * 1000 + time_start;
             if (time_stamp >= (uint64_t)sensor_settings[i].next_call) {
                 // ask BSEC for sensor settings
                 res = bsec_sensor_control_m(inst[i], time_stamp, &sensor_settings[i]);
@@ -442,7 +447,7 @@ int main(void)
         fram_write(BSEC_FRAM_MAGIC_OFFSET, &magic, sizeof(magic));
         fram_write(BSEC_FRAM_STATE_OFFSET, (uint8_t *)bsec_state, sizeof(bsec_state));
 
-        ztimer_sleep(ZTIMER_MSEC, 250);
+        ztimer64_sleep(ZTIMER64_USEC, 250000);
     }
 
     return 0;
