@@ -9,6 +9,7 @@
 #include "fram.h"
 #include "bme68x.h"
 #include "bme68x_params.h"
+#include "saml21_backup_mode.h"
 
 #include "bsec_interface_multi.h"
 #include "bsec_selectivity.h"
@@ -397,7 +398,8 @@ int main(void)
     rtc_get_time(&time);
     printf("RTC time: %04d-%02d-%02d %02d:%02d:%02d\n", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);
     uint64_t time_start = rtc_mktime(&time) * 1000000000 - ztimer64_now(ZTIMER64_USEC) * 1000;
-    while (1) {
+    uint8_t measures = 0;
+    while (measures < BME68X_NUMOF) {
         for (i = 0; i < BME68X_NUMOF; i++) {
             time_stamp = ztimer64_now(ZTIMER64_USEC) * 1000 + time_start;
             if (time_stamp >= (uint64_t)sensor_settings[i].next_call) {
@@ -422,7 +424,9 @@ int main(void)
                     for (int j = 0; j < n_data; j++) {
                         bme68x_data_t data = sensor_data[j];
                         if (data.status & BME68X_GASM_VALID_MSK) {
-                            if ((res = process_data(time_stamp, data, sensor_settings[i].process_data, i)) != BSEC_OK) {
+                            if ((res = process_data(time_stamp, data, sensor_settings[i].process_data, i)) == BSEC_OK) {
+                                measures++;
+                            } else {
                                 printf("[ERROR] process_data failed for inst[%d]: %s.\n", i, bsec_errno(res));
                                 return 1;
                             }
@@ -432,23 +436,29 @@ int main(void)
                 }
             }
         }
-
-        // save current library state to FRAM
-        uint32_t actual_size=0;
-        memset(&bsec_state, 0, sizeof(bsec_state));
-        for (i = 0; i < BME68X_NUMOF; i++) {
-            res = bsec_get_state_m(inst[i], 0, bsec_state[i], sizeof(bsec_state[i]), work_buffer, sizeof(work_buffer), &actual_size);
-            if (res != BSEC_OK) {
-                printf("[ERROR] Reading current BSEC state failed for inst[%d]: %s.\n", i, bsec_errno(res));
-                return 1;
-            }
-        }
-        magic = BSEC_FRAM_MAGIC;
-        fram_write(BSEC_FRAM_MAGIC_OFFSET, &magic, sizeof(magic));
-        fram_write(BSEC_FRAM_STATE_OFFSET, (uint8_t *)bsec_state, sizeof(bsec_state));
-
-        ztimer64_sleep(ZTIMER64_USEC, 250000);
     }
+
+    // save current library state to FRAM
+    uint32_t actual_size=0;
+    memset(&bsec_state, 0, sizeof(bsec_state));
+    for (i = 0; i < BME68X_NUMOF; i++) {
+        res = bsec_get_state_m(inst[i], 0, bsec_state[i], sizeof(bsec_state[i]), work_buffer, sizeof(work_buffer), &actual_size);
+        if (res != BSEC_OK) {
+            printf("[ERROR] Reading current BSEC state failed for inst[%d]: %s.\n", i, bsec_errno(res));
+            return 1;
+        }
+        bme68x_dev_t *bme = &BME68X_SENSOR(&dev[i]);
+        if (bme68x_set_op_mode(BME68X_SLEEP_MODE, bme) != BME68X_OK) {
+            printf("[ERROR]: Failed to put sensor %d in sleep mode\n", i);
+        }
+    }
+    magic = BSEC_FRAM_MAGIC;
+    fram_write(BSEC_FRAM_MAGIC_OFFSET, &magic, sizeof(magic));
+    fram_write(BSEC_FRAM_STATE_OFFSET, (uint8_t *)bsec_state, sizeof(bsec_state));
+
+    // ztimer64_sleep(ZTIMER64_USEC, 250000);
+    saml21_extwake_t extwake = { .pin=EXTWAKE_NONE };
+    saml21_backup_mode_enter(0, extwake, 1, 0);
 
     return 0;
 }

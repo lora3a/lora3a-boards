@@ -18,6 +18,7 @@ USEMODULE += od_string
 USEMODULE += ztimer64_usec
 USEMODULE += ztimer_periph_rtc
 USEMODULE += printf_float
+USEMODULE += saml21_backup_mode
 USEMODULE += bme68x bme68x_i2c bme68x_fp
 USEPKG += bosch_bsec_lib
 
