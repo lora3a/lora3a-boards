@@ -357,7 +357,9 @@ int main(void)
     int64_t time_start = rtc_mktime(&time) * 1000000000 - ztimer64_now(ZTIMER64_USEC) * 1000;
     int64_t time_stamp = 0;
 
-while (1) {
+#ifndef BACKUP_MODE
+start:
+#endif
     for (i = 0; i < BME68X_NUMOF; i++) {
         bme68x_devs_numof=0;
         if (bme68x_init(&dev[i], &bme68x_params[i]) != BME68X_OK) {
@@ -469,14 +471,13 @@ while (1) {
 
     for (i = 0; i < BME68X_NUMOF; i++) { free(inst[i]); }
 
-    ztimer64_sleep(ZTIMER64_USEC, BSEC_SLEEP_SECS * 1000000);
-/*
-    gpio_init(BME68X_POWER_PIN, GPIO_OUT);
-    gpio_set(BME68X_POWER_PIN);
+#ifdef BACKUP_MODE
     saml21_extwake_t extwake = { .pin=EXTWAKE_NONE };
     saml21_backup_mode_enter(0, extwake, BSEC_SLEEP_SECS, 0);
-*/
-}
-
+#else
+    ztimer64_sleep(ZTIMER64_USEC, BSEC_SLEEP_SECS * 1000000);
+    goto start;
+#endif
+    // never reached
     return 0;
 }
