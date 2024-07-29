@@ -11,12 +11,15 @@
 #include "bme68x_params.h"
 #include "saml21_backup_mode.h"
 
+extern unsigned int bme68x_devs_numof;
+
 #include "bsec_interface_multi.h"
 #include "bsec_selectivity.h"
 #include "bsec_errno.h"
 
 #ifndef BSEC_SAMPLE_RATE
 #define BSEC_SAMPLE_RATE BSEC_SAMPLE_RATE_LP
+#define BSEC_SLEEP_SECS 3
 #endif
 
 #define BSEC_CHECK_INPUT(x, shift)  (x & (1 << (shift-1)))
@@ -25,6 +28,14 @@
 #define BSEC_FRAM_MAGIC        42
 #define BSEC_FRAM_MAGIC_OFFSET 0
 #define BSEC_FRAM_STATE_OFFSET 1
+
+void print_llu(char *label, int64_t value)
+{
+    printf("%s 0x", label);
+    uint8_t *ptr = (uint8_t *)&value;
+    for(int k=7;k>=0;k--) printf("%02X", *(ptr+k));
+    printf("\n");
+}
 
 typedef struct
 {
@@ -337,9 +348,18 @@ int main(void)
     bsec_version_t version;
     bsec_library_return_t res;
 
+    fram_init();
     puts("Bosch BSEC library test.");
 
+    struct tm time;
+    rtc_get_time(&time);
+    printf("RTC time: %04d-%02d-%02d %02d:%02d:%02d\n", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);
+    int64_t time_start = rtc_mktime(&time) * 1000000000 - ztimer64_now(ZTIMER64_USEC) * 1000;
+    int64_t time_stamp = 0;
+
+while (1) {
     for (i = 0; i < BME68X_NUMOF; i++) {
+        bme68x_devs_numof=0;
         if (bme68x_init(&dev[i], &bme68x_params[i]) != BME68X_OK) {
             printf("[ERROR] Initialization failed for dev[%d].\n", i);
             return 1;
@@ -368,14 +388,9 @@ int main(void)
             printf("[ERROR] Setup for IAQ failed for inst[%d]: %s.\n", i, bsec_errno(res));
             return 1;
         }
-    }
-
-    uint64_t time_stamp = 0;
-    for (i = 0; i < BME68X_NUMOF; i++) {
         memset(&sensor_settings[i], 0, sizeof(sensor_settings[i]));
     }
 
-    fram_init();
     uint8_t magic = 0;
     fram_read(BSEC_FRAM_MAGIC_OFFSET, &magic, sizeof(magic));
     if (magic == BSEC_FRAM_MAGIC) {
@@ -391,18 +406,13 @@ int main(void)
     } else {
         fram_erase();
     }
-
     puts("Init done.");
 
-    struct tm time;
-    rtc_get_time(&time);
-    printf("RTC time: %04d-%02d-%02d %02d:%02d:%02d\n", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);
-    uint64_t time_start = rtc_mktime(&time) * 1000000000 - ztimer64_now(ZTIMER64_USEC) * 1000;
     uint8_t measures = 0;
     while (measures < BME68X_NUMOF) {
         for (i = 0; i < BME68X_NUMOF; i++) {
-            time_stamp = ztimer64_now(ZTIMER64_USEC) * 1000 + time_start;
-            if (time_stamp >= (uint64_t)sensor_settings[i].next_call) {
+            time_stamp = time_start + ztimer64_now(ZTIMER64_USEC) * 1000;
+            if (time_stamp >= sensor_settings[i].next_call) {
                 // ask BSEC for sensor settings
                 res = bsec_sensor_control_m(inst[i], time_stamp, &sensor_settings[i]);
                 if (res != BSEC_OK) {
@@ -416,23 +426,24 @@ int main(void)
                 // configure sensor as dictated
                 if ((sensor_settings[i].op_mode == BME68X_FORCED_MODE) || (dev[i].config.op_mode != sensor_settings[i].op_mode)) {
                     apply_configuration(&sensor_settings[i], i);
+                    printf("applied configuration to sensor %d\n", i);
 			    }
-                // - read sensor data
-				if (sensor_settings[i].trigger_measurement && sensor_settings[i].op_mode != BME68X_SLEEP_MODE) {
-                    uint8_t n_data = 0;
-                    bme68x_get_measure_data(&dev[i], sensor_data, &n_data);
-                    for (int j = 0; j < n_data; j++) {
-                        bme68x_data_t data = sensor_data[j];
-                        if (data.status & BME68X_GASM_VALID_MSK) {
-                            if ((res = process_data(time_stamp, data, sensor_settings[i].process_data, i)) == BSEC_OK) {
-                                measures++;
-                            } else {
-                                printf("[ERROR] process_data failed for inst[%d]: %s.\n", i, bsec_errno(res));
-                                return 1;
-                            }
+            }
+            // - read sensor data
+			if (sensor_settings[i].trigger_measurement && sensor_settings[i].op_mode != BME68X_SLEEP_MODE) {
+                uint8_t n_data = 0;
+                bme68x_get_measure_data(&dev[i], sensor_data, &n_data);
+                for (int j = 0; j < n_data; j++) {
+                    bme68x_data_t data = sensor_data[j];
+                    if (data.status & BME68X_GASM_VALID_MSK) {
+                        if ((res = process_data(time_stamp, data, sensor_settings[i].process_data, i)) == BSEC_OK) {
+                            measures++;
+                        } else {
+                            printf("[ERROR] process_data failed for inst[%d]: %s.\n", i, bsec_errno(res));
+                            return 1;
                         }
-                        if (sensor_settings[i].op_mode == BME68X_FORCED_MODE) break;
                     }
+                    if (sensor_settings[i].op_mode == BME68X_FORCED_MODE) break;
                 }
             }
         }
@@ -456,9 +467,16 @@ int main(void)
     fram_write(BSEC_FRAM_MAGIC_OFFSET, &magic, sizeof(magic));
     fram_write(BSEC_FRAM_STATE_OFFSET, (uint8_t *)bsec_state, sizeof(bsec_state));
 
-    // ztimer64_sleep(ZTIMER64_USEC, 250000);
+    for (i = 0; i < BME68X_NUMOF; i++) { free(inst[i]); }
+
+    ztimer64_sleep(ZTIMER64_USEC, BSEC_SLEEP_SECS * 1000000);
+/*
+    gpio_init(BME68X_POWER_PIN, GPIO_OUT);
+    gpio_set(BME68X_POWER_PIN);
     saml21_extwake_t extwake = { .pin=EXTWAKE_NONE };
-    saml21_backup_mode_enter(0, extwake, 1, 0);
+    saml21_backup_mode_enter(0, extwake, BSEC_SLEEP_SECS, 0);
+*/
+}
 
     return 0;
 }
