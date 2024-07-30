@@ -25,9 +25,7 @@ extern unsigned int bme68x_devs_numof;
 #define BSEC_CHECK_INPUT(x, shift)  (x & (1 << (shift-1)))
 #define BSEC_TOTAL_HEAT_DUR         UINT16_C(140)
 
-#define BSEC_FRAM_MAGIC        42
-#define BSEC_FRAM_MAGIC_OFFSET 0
-#define BSEC_FRAM_STATE_OFFSET 1
+#define BSEC_FRAM_STATE_OFFSET 0
 
 void print_llu(char *label, int64_t value)
 {
@@ -348,18 +346,15 @@ int main(void)
     bsec_version_t version;
     bsec_library_return_t res;
     int64_t time_start, time_stamp;
-    uint8_t magic, measures, n_data;
+    uint8_t measures, n_data;
     uint32_t actual_size;
-
-#ifdef BACKUP_MODE
     struct tm time;
+
     rtc_get_time(&time);
     printf("RTC time: %04d-%02d-%02d %02d:%02d:%02d\n", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);
-    time_start = rtc_mktime(&time) * 1000000000 - ztimer64_now(ZTIMER64_USEC) * 1000;
-#else
-start:
-    time_start = 0;
-#endif
+    time_start = (int64_t)rtc_mktime(&time) * 1000000000;
+    print_llu("time_start: ", time_start);
+
     fram_init();
     puts("Bosch BSEC library test.");
 
@@ -396,19 +391,14 @@ start:
         memset(&sensor_settings[i], 0, sizeof(sensor_settings[i]));
     }
 
-    fram_read(BSEC_FRAM_MAGIC_OFFSET, &magic, sizeof(magic));
-    if (magic == BSEC_FRAM_MAGIC) {
-        fram_read(BSEC_FRAM_STATE_OFFSET, bsec_state, sizeof(bsec_state));
-        for (i = 0; i < BME68X_NUMOF; i++) {
-            res = bsec_set_state_m(inst[i], bsec_state[i], sizeof(bsec_state[i]), work_buffer, sizeof(work_buffer));
-            if (res != BSEC_OK) {
-                printf("[ERROR] Restoring BSEC state from FRAM failed for inst[%d]: %s.\n", i, bsec_errno(res));
-                return 1;
-            }
+    fram_read(BSEC_FRAM_STATE_OFFSET, bsec_state, sizeof(bsec_state));
+    for (i = 0; i < BME68X_NUMOF; i++) {
+        res = bsec_set_state_m(inst[i], bsec_state[i], sizeof(bsec_state[i]), work_buffer, sizeof(work_buffer));
+        if (res != BSEC_OK) {
+            printf("[ERROR] Restoring BSEC state from FRAM failed for inst[%d]: %s.\n", i, bsec_errno(res));
+            fram_erase();
+            break;
         }
-        puts("BSEC state restored.");
-    } else {
-        fram_erase();
     }
     puts("Init done.");
 
@@ -465,20 +455,14 @@ start:
             printf("[ERROR]: Failed to put sensor %d in sleep mode\n", i);
         }
     }
-    magic = BSEC_FRAM_MAGIC;
-    fram_write(BSEC_FRAM_MAGIC_OFFSET, &magic, sizeof(magic));
     fram_write(BSEC_FRAM_STATE_OFFSET, (uint8_t *)bsec_state, sizeof(bsec_state));
     fram_off();
 
     for (i = 0; i < BME68X_NUMOF; i++) { free(inst[i]); }
 
-#ifdef BACKUP_MODE
     saml21_extwake_t extwake = { .pin=EXTWAKE_NONE };
     saml21_backup_mode_enter(0, extwake, BSEC_SLEEP_SECS, 0);
-#else
-    ztimer64_sleep(ZTIMER64_USEC, BSEC_SLEEP_SECS * 1000000);
-    goto start;
-#endif
+
     // never reached
     return 0;
 }
