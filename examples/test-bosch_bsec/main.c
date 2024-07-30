@@ -344,22 +344,25 @@ bsec_library_return_t process_data(int64_t tstamp_ns, bme68x_data_t data, int32_
 
 int main(void)
 {
-    size_t i;
+    size_t i, j;
     bsec_version_t version;
     bsec_library_return_t res;
+    int64_t time_start, time_stamp;
+    uint8_t magic, measures, n_data;
+    uint32_t actual_size;
 
-    fram_init();
-    puts("Bosch BSEC library test.");
-
+#ifdef BACKUP_MODE
     struct tm time;
     rtc_get_time(&time);
     printf("RTC time: %04d-%02d-%02d %02d:%02d:%02d\n", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);
-    int64_t time_start = rtc_mktime(&time) * 1000000000 - ztimer64_now(ZTIMER64_USEC) * 1000;
-    int64_t time_stamp = 0;
-
-#ifndef BACKUP_MODE
+    time_start = rtc_mktime(&time) * 1000000000 - ztimer64_now(ZTIMER64_USEC) * 1000;
+#else
 start:
+    time_start = 0;
 #endif
+    fram_init();
+    puts("Bosch BSEC library test.");
+
     for (i = 0; i < BME68X_NUMOF; i++) {
         bme68x_devs_numof=0;
         if (bme68x_init(&dev[i], &bme68x_params[i]) != BME68X_OK) {
@@ -393,7 +396,6 @@ start:
         memset(&sensor_settings[i], 0, sizeof(sensor_settings[i]));
     }
 
-    uint8_t magic = 0;
     fram_read(BSEC_FRAM_MAGIC_OFFSET, &magic, sizeof(magic));
     if (magic == BSEC_FRAM_MAGIC) {
         fram_read(BSEC_FRAM_STATE_OFFSET, bsec_state, sizeof(bsec_state));
@@ -410,7 +412,7 @@ start:
     }
     puts("Init done.");
 
-    uint8_t measures = 0;
+    measures = 0;
     while (measures < BME68X_NUMOF) {
         for (i = 0; i < BME68X_NUMOF; i++) {
             time_stamp = time_start + ztimer64_now(ZTIMER64_USEC) * 1000;
@@ -433,9 +435,8 @@ start:
             }
             // - read sensor data
 			if (sensor_settings[i].trigger_measurement && sensor_settings[i].op_mode != BME68X_SLEEP_MODE) {
-                uint8_t n_data = 0;
                 bme68x_get_measure_data(&dev[i], sensor_data, &n_data);
-                for (int j = 0; j < n_data; j++) {
+                for (j = 0; j < n_data; j++) {
                     bme68x_data_t data = sensor_data[j];
                     if (data.status & BME68X_GASM_VALID_MSK) {
                         if ((res = process_data(time_stamp, data, sensor_settings[i].process_data, i)) == BSEC_OK) {
@@ -452,7 +453,6 @@ start:
     }
 
     // save current library state to FRAM
-    uint32_t actual_size=0;
     memset(&bsec_state, 0, sizeof(bsec_state));
     for (i = 0; i < BME68X_NUMOF; i++) {
         res = bsec_get_state_m(inst[i], 0, bsec_state[i], sizeof(bsec_state[i]), work_buffer, sizeof(work_buffer), &actual_size);
@@ -468,6 +468,7 @@ start:
     magic = BSEC_FRAM_MAGIC;
     fram_write(BSEC_FRAM_MAGIC_OFFSET, &magic, sizeof(magic));
     fram_write(BSEC_FRAM_STATE_OFFSET, (uint8_t *)bsec_state, sizeof(bsec_state));
+    fram_off();
 
     for (i = 0; i < BME68X_NUMOF; i++) { free(inst[i]); }
 
