@@ -115,6 +115,7 @@ void saml21_backup_mode_enter(uint8_t RadioOffRequested, saml21_extwake_t extwak
     #ifdef TX_OUTPUT_SEL_PIN
         gpio_clear(TX_OUTPUT_SEL_PIN);
     #endif
+        spi_deinit_pins(sx127x.params.spi);
     #endif
     }
     if (extwake.pin != EXTWAKE_NONE) {
