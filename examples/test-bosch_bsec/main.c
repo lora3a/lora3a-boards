@@ -462,7 +462,9 @@ int main(void)
     saml21_cpu_debug();
 
     fram_off();
-    //gpio_clear(BME68X_POWER_PIN);
+#ifdef BME68X_POWER_OFF_DURING_SLEEP
+    gpio_clear(BME68X_POWER_PIN);
+#endif
     i2c_deinit_pins(ACME0_I2C_DEV);
     i2c_deinit_pins(ACME2_I2C_DEV);
     uart_deinit_pins(UART_DEV(0));
