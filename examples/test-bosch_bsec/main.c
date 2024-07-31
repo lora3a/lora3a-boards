@@ -4,12 +4,15 @@
 
 #include "od.h"
 #include "periph/rtc.h"
+#include "periph/gpio.h"
+#include "periph/uart.h"
 #include "rtc_utils.h"
 #include "ztimer64.h"
 #include "fram.h"
 #include "bme68x.h"
 #include "bme68x_params.h"
 #include "saml21_backup_mode.h"
+#include "saml21_cpu_debug.h"
 
 extern unsigned int bme68x_devs_numof;
 
@@ -448,20 +451,24 @@ int main(void)
         res = bsec_get_state_m(inst[i], 0, bsec_state[i], sizeof(bsec_state[i]), work_buffer, sizeof(work_buffer), &actual_size);
         if (res != BSEC_OK) {
             printf("[ERROR] Reading current BSEC state failed for inst[%d]: %s.\n", i, bsec_errno(res));
-            return 1;
         }
+        free(inst[i]);
         bme68x_dev_t *bme = &BME68X_SENSOR(&dev[i]);
         if (bme68x_set_op_mode(BME68X_SLEEP_MODE, bme) != BME68X_OK) {
             printf("[ERROR]: Failed to put sensor %d in sleep mode\n", i);
         }
     }
     fram_write(BSEC_FRAM_STATE_OFFSET, (uint8_t *)bsec_state, sizeof(bsec_state));
-    fram_off();
+    saml21_cpu_debug();
 
-    for (i = 0; i < BME68X_NUMOF; i++) { free(inst[i]); }
+    fram_off();
+    //gpio_clear(BME68X_POWER_PIN);
+    i2c_deinit_pins(ACME0_I2C_DEV);
+    i2c_deinit_pins(ACME2_I2C_DEV);
+    uart_deinit_pins(UART_DEV(0));
 
     saml21_extwake_t extwake = { .pin=EXTWAKE_NONE };
-    saml21_backup_mode_enter(0, extwake, BSEC_SLEEP_SECS, 0);
+    saml21_backup_mode_enter(1, extwake, BSEC_SLEEP_SECS, 0);
 
     // never reached
     return 0;

@@ -13,14 +13,18 @@ DEVELHELP ?= 1
 QUIET ?= 1
 PORT ?= /dev/ttyUSB0
 
+USEMODULE += periph_uart_reconfigure
 USEMODULE += fram
 USEMODULE += od_string
 USEMODULE += ztimer64_usec
 USEMODULE += ztimer_periph_rtc
 USEMODULE += printf_float
 USEMODULE += saml21_backup_mode
+USEMODULE += saml21_cpu_debug
 USEMODULE += bme68x bme68x_i2c bme68x_fp
 USEPKG += bosch_bsec_lib
+
+CFLAGS += -DACME0_BUS_MODE=MODE_I2C -DFRAM_ENABLE_PIN=ACME0_POWER_PIN -DACME0_POWER_PIN_INITIAL_VALUE=0
 
 BME68X_PORT ?= 2
 SENSORS := "{.ifsel=BME68X_I2C_INTF,.intf.i2c.dev=ACME$(BME68X_PORT)_I2C_DEV,.intf.i2c.addr=BME68X_I2C_ADDR_1}"
