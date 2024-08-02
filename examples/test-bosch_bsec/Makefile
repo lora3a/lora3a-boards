@@ -20,7 +20,6 @@ USEMODULE += ztimer64_usec
 USEMODULE += ztimer_periph_rtc
 USEMODULE += printf_float
 USEMODULE += saml21_backup_mode
-USEMODULE += saml21_cpu_debug
 USEMODULE += bme68x bme68x_i2c bme68x_fp
 USEPKG += bosch_bsec_lib
 
@@ -34,9 +33,17 @@ CFLAGS += -DBME68X_PARAMS_I2C="${SENSORS}"
 
 SLOW ?=
 ENERGY_SAVE ?=
+SLEEP ?=
+
+ifneq ($(SLEEP),)
+    CFLAGS += -DBSEC_SLEEP_SECS=$(SLEEP)
+endif
 
 ifeq ($(SLOW),1)
-    CFLAGS += -DBSEC_CONFIG=BME688_SEL_33V_300S_4D -DBSEC_SAMPLE_RATE=BSEC_SAMPLE_RATE_ULP -DBSEC_SLEEP_SECS=300
+    CFLAGS += -DBSEC_CONFIG=BME688_SEL_33V_300S_4D -DBSEC_SAMPLE_RATE=BSEC_SAMPLE_RATE_ULP
+    ifeq ($(SLEEP),)
+        CFLAGS += -DBSEC_SLEEP_SECS=300
+    endif
 endif
 
 ifeq ($(ENERGY_SAVE),1)

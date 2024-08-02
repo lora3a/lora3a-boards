@@ -12,7 +12,6 @@
 #include "bme68x.h"
 #include "bme68x_params.h"
 #include "saml21_backup_mode.h"
-#include "saml21_cpu_debug.h"
 
 extern unsigned int bme68x_devs_numof;
 
@@ -22,7 +21,9 @@ extern unsigned int bme68x_devs_numof;
 
 #ifndef BSEC_SAMPLE_RATE
 #define BSEC_SAMPLE_RATE BSEC_SAMPLE_RATE_LP
+#ifndef BSEC_SLEEP_SECS
 #define BSEC_SLEEP_SECS 3
+#endif
 #endif
 
 #define BSEC_CHECK_INPUT(x, shift)  (x & (1 << (shift-1)))
@@ -459,7 +460,6 @@ int main(void)
         }
     }
     fram_write(BSEC_FRAM_STATE_OFFSET, (uint8_t *)bsec_state, sizeof(bsec_state));
-    saml21_cpu_debug();
 
     fram_off();
 #ifdef BME68X_POWER_OFF_DURING_SLEEP
