@@ -21,7 +21,7 @@ USEMODULE += ztimer_periph_rtc
 USEMODULE += printf_float
 USEMODULE += saml21_backup_mode
 USEMODULE += bme68x bme68x_i2c bme68x_fp
-USEPKG += bosch_bsec_lib
+USEMODULE += bosch_bsec
 
 CFLAGS += -DACME0_BUS_MODE=MODE_I2C -DFRAM_ENABLE_PIN=ACME0_POWER_PIN -DACME0_POWER_PIN_INITIAL_VALUE=0
 
