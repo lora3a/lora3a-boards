@@ -178,23 +178,23 @@ bsec_library_return_t process_data(int64_t tstamp_ns, bme68x_data_t data, int32_
     }
     if (BSEC_CHECK_INPUT(bsec_process_data, BSEC_INPUT_TEMPERATURE))
     {
-#ifdef BME68X_USE_FPU
         inputs[n].sensor_id = BSEC_INPUT_TEMPERATURE;
-#else
-        inputs[n].sensor_id = BSEC_INPUT_TEMPERATURE / 100.0f;
-#endif
+#ifdef BME68X_USE_FPU
         inputs[n].signal = data.temperature;
+#else
+        inputs[n].signal = data.temperature / 100.0f;
+#endif
         inputs[n].time_stamp = tstamp_ns;
         n++;
     }
     if (BSEC_CHECK_INPUT(bsec_process_data, BSEC_INPUT_HUMIDITY))
     {
-#ifdef BME68X_USE_FPU
         inputs[n].sensor_id = BSEC_INPUT_HUMIDITY;
-#else
-        inputs[n].sensor_id = BSEC_INPUT_HUMIDITY / 1000.0f;
-#endif
+#ifdef BME68X_USE_FPU
         inputs[n].signal = data.humidity;
+#else
+        inputs[n].signal = data.humidity / 1000.0f;
+#endif
         inputs[n].time_stamp = tstamp_ns;
         n++;
     }
