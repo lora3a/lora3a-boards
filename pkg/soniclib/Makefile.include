@@ -1,0 +1,6 @@
+INCLUDES += -I$(PKGDIRBASE)/soniclib
+INCLUDES += -I$(PKGDIRBASE)/soniclib/invn/soniclib
+INCLUDES += -I$(PKGDIRBASE)/soniclib/invn/soniclib/details
+INCLUDES += -I$(PKGDIRBASE)/soniclib/invn/soniclib/sensor_fw
+
+ARCHIVES += $(BINDIR)/libsoniclib.a
