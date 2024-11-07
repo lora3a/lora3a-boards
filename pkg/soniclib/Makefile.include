@@ -1,6 +1,12 @@
+here := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+DIRS += $(here)/bsp
+
+INCLUDES += -I$(here)/include
 INCLUDES += -I$(PKGDIRBASE)/soniclib
 INCLUDES += -I$(PKGDIRBASE)/soniclib/invn/soniclib
 INCLUDES += -I$(PKGDIRBASE)/soniclib/invn/soniclib/details
 INCLUDES += -I$(PKGDIRBASE)/soniclib/invn/soniclib/sensor_fw
 
 ARCHIVES += $(BINDIR)/libsoniclib.a
+
+$(call target-export-variables,soniclib,SONICLIB_FIRMWARE SONICLIB_DEBUG_LEVEL)
