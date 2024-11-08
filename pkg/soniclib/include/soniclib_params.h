@@ -50,6 +50,9 @@ static const soniclib_params_t soniclib_params[] = {
 };
 #define SONICLIB_NUMOF  ARRAY_SIZE(soniclib_params)
 
+extern ch_dev_t soniclib_devices[SONICLIB_NUMOF];
+extern ch_group_t soniclib_group;
+
 #ifdef __cplusplus
 }
 #endif

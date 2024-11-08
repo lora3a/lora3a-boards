@@ -7,6 +7,9 @@
 #include "soniclib_params.h"
 #include "invn/soniclib/chirp_bsp.h"
 
+ch_dev_t soniclib_devices[SONICLIB_NUMOF];
+ch_group_t soniclib_group;
+
 void chbsp_delay_us(uint32_t us) { ztimer_sleep(ZTIMER_USEC, us); }
 void chbsp_delay_ms(uint32_t ms) { ztimer_sleep(ZTIMER_MSEC, ms); }
 uint32_t chbsp_timestamp_ms(void) { return ztimer_now(ZTIMER_MSEC); }
@@ -24,7 +27,93 @@ void chbsp_program_disable(ch_dev_t *dev_ptr) {
     gpio_set(soniclib_params[dev_num].prog_pin);
 }
 
-int chbsp_i2c_init(void) { return 0; }
+static void _int1_callback(void *arg) {
+    size_t num = (size_t)arg;
+    uint8_t dev_num = (uint8_t)(num & 0xff);
+    ch_interrupt(&soniclib_group, dev_num);
+}
+
+void chbsp_group_set_int1_dir_out(ch_group_t *grp_ptr) {
+    uint8_t dev_num;
+    for (dev_num = 0; dev_num < ch_get_num_ports(grp_ptr); dev_num++)
+    {
+        ch_dev_t *dev_ptr = ch_get_dev_ptr(grp_ptr, dev_num);
+        if (ch_sensor_is_connected(dev_ptr))
+            gpio_init(soniclib_params[dev_num].io_pin, GPIO_OUT);
+    }
+}
+
+void chbsp_set_int1_dir_out(ch_dev_t *dev_ptr) {
+    uint8_t dev_num = ch_get_dev_num(dev_ptr);
+    gpio_init(soniclib_params[dev_num].io_pin, GPIO_OUT);
+}
+
+void chbsp_group_set_int1_dir_in(ch_group_t *grp_ptr) {
+    uint8_t dev_num;
+    for (dev_num = 0; dev_num < ch_get_num_ports(grp_ptr); dev_num++)
+    {
+        ch_dev_t *dev_ptr = ch_get_dev_ptr(grp_ptr, dev_num);
+        if (ch_sensor_is_connected(dev_ptr))
+            gpio_init(soniclib_params[dev_num].io_pin, GPIO_IN);
+    }
+}
+
+void chbsp_group_int1_clear(ch_group_t *grp_ptr) {
+    uint8_t dev_num;
+    for (dev_num = 0; dev_num < ch_get_num_ports(grp_ptr); dev_num++)
+    {
+        ch_dev_t *dev_ptr = ch_get_dev_ptr(grp_ptr, dev_num);
+        if (ch_sensor_is_connected(dev_ptr))
+            gpio_clear(soniclib_params[dev_num].io_pin);
+    }
+}
+
+void chbsp_group_int1_set(ch_group_t *grp_ptr) {
+    uint8_t dev_num;
+    for (dev_num = 0; dev_num < ch_get_num_ports(grp_ptr); dev_num++)
+    {
+        ch_dev_t *dev_ptr = ch_get_dev_ptr(grp_ptr, dev_num);
+        if (ch_sensor_is_connected(dev_ptr))
+            gpio_set(soniclib_params[dev_num].io_pin);
+    }
+}
+
+void chbsp_group_int1_interrupt_enable(ch_group_t *grp_ptr) {
+    uint8_t dev_num;
+    size_t num;
+    for (dev_num = 0; dev_num < ch_get_num_ports(grp_ptr); dev_num++)
+    {
+        ch_dev_t *dev_ptr = ch_get_dev_ptr(grp_ptr, dev_num);
+        if (ch_sensor_is_connected(dev_ptr)) {
+            num = dev_num;
+            gpio_init_int(soniclib_params[dev_num].io_pin, GPIO_IN, GPIO_FALLING, _int1_callback, (void *)num);
+        }
+    }
+}
+
+void chbsp_group_int1_interrupt_disable(ch_group_t *grp_ptr) {
+    uint8_t dev_num;
+    for (dev_num = 0; dev_num < ch_get_num_ports(grp_ptr); dev_num++)
+    {
+        ch_dev_t *dev_ptr = ch_get_dev_ptr(grp_ptr, dev_num);
+        if (ch_sensor_is_connected(dev_ptr)) {
+            gpio_irq_disable(soniclib_params[dev_num].io_pin);
+        }
+    }
+}
+
+void chbsp_int1_interrupt_disable(ch_dev_t *dev_ptr) {
+    uint8_t dev_num = ch_get_dev_num(dev_ptr);
+    gpio_irq_disable(soniclib_params[dev_num].io_pin);
+}
+
+int chbsp_i2c_init(void) {
+    for (uint8_t dev_num = 0; dev_num < SONICLIB_NUMOF; dev_num++) {
+        // might init same bus multiple times
+        i2c_init(soniclib_params[dev_num].i2c_bus);
+    }
+    return 0;
+}
 
 uint8_t chbsp_i2c_get_info(ch_group_t __attribute__((unused)) *grp_ptr, uint8_t io_index, ch_i2c_info_t *info_ptr) {
     uint8_t res = 1;
