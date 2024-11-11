@@ -10,7 +10,7 @@
 ch_dev_t soniclib_devices[SONICLIB_NUMOF];
 ch_group_t soniclib_group;
 
-void chbsp_delay_us(uint32_t us) { ztimer_sleep(ZTIMER_USEC, us); }
+void chbsp_delay_us(uint32_t us) { ztimer_spin(ZTIMER_USEC, us); }
 void chbsp_delay_ms(uint32_t ms) { ztimer_sleep(ZTIMER_MSEC, ms); }
 uint32_t chbsp_timestamp_ms(void) { return ztimer_now(ZTIMER_MSEC); }
 
