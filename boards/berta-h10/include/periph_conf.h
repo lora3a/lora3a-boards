@@ -285,9 +285,12 @@ static const spi_conf_t spi_config[] = {
  */
 static const i2c_conf_t i2c_config[] = {
 #if ACME0_BUS_MODE == MODE_I2C
+    #ifndef ACME0_I2C_SPEED
+        #define ACME0_I2C_SPEED I2C_SPEED_NORMAL
+    #endif
     {
         .dev = &(SERCOM1->I2CM),
-        .speed = I2C_SPEED_NORMAL,
+        .speed = ACME0_I2C_SPEED,
         .scl_pin = GPIO_PIN(PA, 17),
         .sda_pin = GPIO_PIN(PA, 16),
         .mux = GPIO_MUX_C,
@@ -296,9 +299,12 @@ static const i2c_conf_t i2c_config[] = {
     },
 #endif
 #if ACME1_BUS_MODE == MODE_I2C
+    #ifndef ACME1_I2C_SPEED
+        #define ACME1_I2C_SPEED I2C_SPEED_NORMAL
+    #endif
     {
         .dev = &(SERCOM5->I2CM),
-        .speed = I2C_SPEED_NORMAL,
+        .speed = ACME1_I2C_SPEED,
         .scl_pin = GPIO_PIN(PB, 3),
         .sda_pin = GPIO_PIN(PB, 2),
         .mux = GPIO_MUX_D,
@@ -307,9 +313,12 @@ static const i2c_conf_t i2c_config[] = {
     },
 #endif
 #if ACME2_BUS_MODE == MODE_I2C
+    #ifndef ACME2_I2C_SPEED
+        #define ACME2_I2C_SPEED I2C_SPEED_NORMAL
+    #endif
     {
         .dev = &(SERCOM0->I2CM),
-        .speed = I2C_SPEED_NORMAL,
+        .speed = ACME2_I2C_SPEED,
         .scl_pin = GPIO_PIN(PA, 5),
         .sda_pin = GPIO_PIN(PA, 4),
         .mux = GPIO_MUX_D,
