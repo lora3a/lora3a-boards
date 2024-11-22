@@ -14,8 +14,21 @@ void chbsp_delay_us(uint32_t us) { ztimer_spin(ZTIMER_USEC, us); }
 void chbsp_delay_ms(uint32_t ms) { ztimer_sleep(ZTIMER_MSEC, ms); }
 uint32_t chbsp_timestamp_ms(void) { return ztimer_now(ZTIMER_MSEC); }
 
-void chbsp_reset_assert(void) {}
-void chbsp_reset_release(void) {}
+void chbsp_reset_assert(void) {
+    uint8_t dev_num;
+    for (dev_num = 0; dev_num < SONICLIB_NUMOF; dev_num++)
+    {
+        gpio_clear(soniclib_params[dev_num].reset_pin);
+    }
+}
+
+void chbsp_reset_release(void) {
+    uint8_t dev_num;
+    for (dev_num = 0; dev_num < SONICLIB_NUMOF; dev_num++)
+    {
+        gpio_set(soniclib_params[dev_num].reset_pin);
+    }
+}
 
 void chbsp_program_enable(ch_dev_t *dev_ptr) {
     uint8_t dev_num = ch_get_dev_num(dev_ptr);

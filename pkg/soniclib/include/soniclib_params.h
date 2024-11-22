@@ -12,6 +12,7 @@ typedef struct {
     uint8_t i2c_bus;
     uint8_t i2c_addr;
     gpio_t prog_pin;
+    gpio_t reset_pin;
     gpio_t io_pin;
 } soniclib_params_t;
 
@@ -27,6 +28,10 @@ typedef struct {
 #define SONICLIB_PROG_PIN GPIO_PIN(0,0)
 #endif
 
+#ifndef SONICLIB_RESET_PIN
+#define SONICLIB_RESET_PIN GPIO_PIN(0,0)
+#endif
+
 #ifndef SONICLIB_IO_PIN
 #define SONICLIB_IO_PIN GPIO_PIN(0,0)
 #endif
@@ -36,12 +41,13 @@ typedef struct {
 #endif
 
 #ifndef SONICLIB_PARAMS
-#define SONICLIB_PARAMS           \
-{                                 \
-   .i2c_bus  = SONICLIB_I2C_BUS,  \
-   .i2c_addr = SONICLIB_I2C_ADDR, \
-   .prog_pin = SONICLIB_PROG_PIN, \
-   .io_pin   = SONICLIB_IO_PIN,   \
+#define SONICLIB_PARAMS             \
+{                                   \
+   .i2c_bus  = SONICLIB_I2C_BUS,    \
+   .i2c_addr = SONICLIB_I2C_ADDR,   \
+   .prog_pin = SONICLIB_PROG_PIN,   \
+   .reset_pin = SONICLIB_RESET_PIN, \
+   .io_pin   = SONICLIB_IO_PIN,     \
 }
 #endif
 
