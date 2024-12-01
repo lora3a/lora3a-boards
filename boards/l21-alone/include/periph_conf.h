@@ -11,10 +11,6 @@ extern "C" {
 #define MODE_SPI   2
 #define MODE_I2C   3
 
-#ifndef ACME0_BUS_MODE
-#define ACME0_BUS_MODE  MODE_I2C
-#endif
-
 /**
  * @brief   GCLK reference speed
  */
