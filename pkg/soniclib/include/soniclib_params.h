@@ -28,8 +28,16 @@ typedef struct {
 #define SONICLIB_PROG_PIN GPIO_PIN(0,0)
 #endif
 
+#ifndef SONICLIB_PROG_PIN_ACTIVE
+#define SONICLIB_PROG_PIN_ACTIVE (1)
+#endif
+
 #ifndef SONICLIB_RESET_PIN
 #define SONICLIB_RESET_PIN GPIO_PIN(0,0)
+#endif
+
+#ifndef SONICLIB_RESET_PIN_ACTIVE
+#define SONICLIB_RESET_PIN_ACTIVE (0)
 #endif
 
 #ifndef SONICLIB_IO_PIN
@@ -43,11 +51,11 @@ typedef struct {
 #ifndef SONICLIB_PARAMS
 #define SONICLIB_PARAMS             \
 {                                   \
-   .i2c_bus  = SONICLIB_I2C_BUS,    \
-   .i2c_addr = SONICLIB_I2C_ADDR,   \
-   .prog_pin = SONICLIB_PROG_PIN,   \
+   .i2c_bus   = SONICLIB_I2C_BUS,   \
+   .i2c_addr  = SONICLIB_I2C_ADDR,  \
+   .prog_pin  = SONICLIB_PROG_PIN,  \
    .reset_pin = SONICLIB_RESET_PIN, \
-   .io_pin   = SONICLIB_IO_PIN,     \
+   .io_pin    = SONICLIB_IO_PIN     \
 }
 #endif
 

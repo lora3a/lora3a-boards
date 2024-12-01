@@ -18,7 +18,7 @@ void chbsp_reset_assert(void) {
     uint8_t dev_num;
     for (dev_num = 0; dev_num < SONICLIB_NUMOF; dev_num++)
     {
-        gpio_clear(soniclib_params[dev_num].reset_pin);
+        gpio_write(soniclib_params[dev_num].reset_pin, SONICLIB_RESET_PIN_ACTIVE);
     }
 }
 
@@ -26,18 +26,18 @@ void chbsp_reset_release(void) {
     uint8_t dev_num;
     for (dev_num = 0; dev_num < SONICLIB_NUMOF; dev_num++)
     {
-        gpio_set(soniclib_params[dev_num].reset_pin);
+        gpio_write(soniclib_params[dev_num].reset_pin, (SONICLIB_RESET_PIN_ACTIVE ? 0 : 1));
     }
 }
 
 void chbsp_program_enable(ch_dev_t *dev_ptr) {
     uint8_t dev_num = ch_get_dev_num(dev_ptr);
-    gpio_clear(soniclib_params[dev_num].prog_pin);
+    gpio_write(soniclib_params[dev_num].prog_pin, SONICLIB_PROG_PIN_ACTIVE);
 }
 
 void chbsp_program_disable(ch_dev_t *dev_ptr) {
     uint8_t dev_num = ch_get_dev_num(dev_ptr);
-    gpio_set(soniclib_params[dev_num].prog_pin);
+    gpio_write(soniclib_params[dev_num].prog_pin, (SONICLIB_PROG_PIN_ACTIVE ? 0 : 1));
 }
 
 static void _int1_callback(void *arg) {
