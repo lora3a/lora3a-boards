@@ -91,6 +91,8 @@ static const saul_reg_info_t hdc3020_saul_info[] =
     HDC3020_SAULINFO
 };
 
+#define HDC3020_SAULINFO_NUMOF   ARRAY_SIZE(hdc3020_saul_info)
+
 #ifdef __cplusplus
 }
 #endif

@@ -4,19 +4,17 @@
 #include "hdc3020.h"
 #include "hdc3020_params.h"
 
-#define HDC3020_NUM    ARRAY_SIZE(hdc3020_params)
-
-#define HDC3020_SAULINFO_NUM   (sizeof(hdc3020_saul_info) / \
-                                 sizeof(hdc3020_saul_info[0]))
-
-static hdc3020_t hdc3020_devs[HDC3020_NUM];
-static saul_reg_t saul_entries[HDC3020_NUM * 2];
+static hdc3020_t hdc3020_devs[HDC3020_NUMOF];
+static saul_reg_t saul_entries[HDC3020_NUMOF * 2];
 
 void auto_init_hdc3020(void)
 {
-    assert(HDC3020_NUM == HDC3020_SAULINFO_NUM);
+    if (HDC3020_NUMOF!=HDC3020_SAULINFO_NUMOF) {
+        puts("HDC3020: configuration error, HDC3020_NUMOF!=HDC3020_SAULINFO_NUMOF");
+        assert(0);
+    }
 
-    for (unsigned int i = 0; i < HDC3020_NUM; i++) {
+    for (unsigned int i = 0; i < HDC3020_NUMOF; i++) {
         int res;
 
         LOG_DEBUG("[auto_init_saul] initializing hdc3020 #%u\n", i);
