@@ -17,13 +17,6 @@
  *
  */
 
-
-
-
-
-
-
-
 #ifndef HDC3020_H
 #define HDC3020_H
 
@@ -150,11 +143,14 @@ typedef struct {
  * @return      -ENODEV Device using the foo I2C address is not a HDC3020 device
  */
 int hdc3020_init(hdc3020_t *dev, const hdc3020_params_t *params);
+
 void hdc3020_deinit(const hdc3020_t *dev);
 
 int hdc3020_trigger_on_demand_measurement(
-    const hdc3020_t *dev, uint8_t hdc3020_low_power_mode,
-    uint16_t *relative_humidity, uint16_t *temperature);
+    const hdc3020_t *dev, uint8_t hdc3020_low_power_mode);
+
+int hdc3020_fetch_on_demand_measurement(
+    const hdc3020_t *dev, double *temp, double *hum);
 
 int hdc3020_set_auto_measurement_mode(
     const hdc3020_t *dev, uint8_t auto_measurement_mode);
@@ -167,7 +163,6 @@ int hdc3020_auto_measurement_mode_read(
 
 int hdc3020_minimum_temperature_auto_measurement_mode_read(
     const hdc3020_t *dev, double *minimum_temperature);
-
 
 int hdc3020_maximum_temperature_auto_measurement_mode_read(
     const hdc3020_t *dev, double *maximum_temperature);
@@ -191,6 +186,7 @@ int hdc3020_clear_high_alert(const hdc3020_t *dev, double relative_humidity, dou
 int hdc3020_clear_low_alert(const hdc3020_t *dev, double relative_humidity, double temperature);
 
 int hdc3020_transfert_alert_into_nvm(const hdc3020_t *dev);
+
 int hdc3020_deactivate_alert(const hdc3020_t *dev);
 
 int hdc3020_read_alert(const hdc3020_t *dev,
@@ -212,13 +208,14 @@ int hdc3020_set_rh_temp_offset(
 
 int hdc3020_get_rh_temp_offset(
     const hdc3020_t *dev, double *relative_humidity_offset, double *temperature_offset);
+
 int hdc3020_soft_reset(const hdc3020_t *dev);
+
 int hdc3020_i2c_general_call_reset(const hdc3020_t *dev);
 
 int hdc3020_read_nist_id(const hdc3020_t *dev, uint8_t data[6]);
 
 int hdc3020_read_manufacturer_id(const hdc3020_t *dev, uint16_t *manufacturer_id);
-
 
 int hdc3020_read(const hdc3020_t *dev, double *temp, double *hum);
 

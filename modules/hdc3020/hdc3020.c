@@ -59,29 +59,33 @@ void hdc3020_deinit(const hdc3020_t *dev)
     }
 }
 
-int hdc3020_trigger_on_demand_measurement(const hdc3020_t *dev, uint8_t hdc3020_low_power_mode,
-                                          uint16_t *relative_humidity, uint16_t *temperature)
+int hdc3020_trigger_on_demand_measurement(const hdc3020_t *dev, uint8_t hdc3020_low_power_mode)
 {
     if (hdc3020_low_power_mode > HDC3020_MAX_LENGHT_TRIGGER_ON_DEMAND_MODE_MATRIX) {
         return HDC3020_ERR_LOW_POWER_MODE_CONFIG;
     }
 
-    int status = 0, retry = 10;
-    uint8_t command[2] =
-    { hdc3020_trigger_on_demand_mode_matrix[hdc3020_low_power_mode][0],
-      hdc3020_trigger_on_demand_mode_matrix[hdc3020_low_power_mode][1] };
-    uint8_t data[6];
-
+    uint8_t command[2] = {
+        hdc3020_trigger_on_demand_mode_matrix[hdc3020_low_power_mode][0],
+        hdc3020_trigger_on_demand_mode_matrix[hdc3020_low_power_mode][1]
+    };
 
     i2c_acquire(dev->params.i2c_dev);
-
     if (i2c_write_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
                         command, sizeof(command), 0)) {
         return HDC3020_ERR_MEAS;
     }
+    i2c_release(dev->params.i2c_dev);
 
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+    return HDC3020_OK;
+}
 
+int hdc3020_fetch_on_demand_measurement(const hdc3020_t *dev, double *temp, double *hum)
+{
+    int status = 0, retry = 10;
+    uint8_t data[6];
+
+    i2c_acquire(dev->params.i2c_dev);
     do {
         status = i2c_read_bytes(dev->params.i2c_dev, dev->params.i2c_addr,
                                 data, sizeof(data), 0);
@@ -98,14 +102,13 @@ int hdc3020_trigger_on_demand_measurement(const hdc3020_t *dev, uint8_t hdc3020_
             return HDC3020_ERR_CRC_COMPARISON;
         }
     } while(status);
-
     i2c_release(dev->params.i2c_dev);
 
-    if (temperature) {
-        *temperature = (data[0] << 8) + data[1];
+    if (temp) {
+        *temp = temp_hdc3020_to_temp((data[0] << 8) + data[1]);
     }
-    if (relative_humidity) {
-        *relative_humidity =  (data[3] << 8) + data[4];
+    if (hum) {
+        *hum =  rh_hdc3020_to_rh((data[3] << 8) + data[4]);
     }
 
     return HDC3020_OK;
@@ -1027,16 +1030,16 @@ int hdc3020_read_manufacturer_id(const hdc3020_t *dev, uint16_t *manufacturer_id
 
 int hdc3020_read(const hdc3020_t *dev, double *temp, double *hum)
 {
-    uint16_t relative_humidity, temperature = 0;
+    int res;
+    res = hdc3020_trigger_on_demand_measurement(dev, 0);
+    if (res != HDC3020_OK)
+        return res;
 
-    hdc3020_trigger_on_demand_measurement(dev, 0, &relative_humidity, &temperature);
+    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
 
-    if (temp) {
-        *temp = temp_hdc3020_to_temp(temperature);
-    }
-    if (hum) {
-        *hum =  rh_hdc3020_to_rh(relative_humidity);
-    }
+    res = hdc3020_fetch_on_demand_measurement(dev, temp, hum);
+    if (res != HDC3020_OK)
+        return res;
 
-    return HDC3020_OK;
+    return res;
 }
