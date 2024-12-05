@@ -28,10 +28,6 @@ const uint8_t hdc3020_trigger_on_demand_mode_matrix[4][2] = {
     { HDC3020_TRIGGER_ON_DEMAND_MODE_LPM3_MSB, HDC3020_TRIGGER_ON_DEMAND_MODE_LPM3_LSB },
 };
 
-#define HDC3020_MAX_LENGHT_TRIGGER_ON_DEMAND_MODE_MATRIX \
-    (sizeof(hdc3020_trigger_on_demand_mode_matrix) / \
-     sizeof(hdc3020_trigger_on_demand_mode_matrix[0]))
-
 /**
  * @name    Auto Measurement Mode
  *          1 measurement per 2 seconds.
@@ -107,7 +103,7 @@ const uint8_t hdc3020_trigger_on_demand_mode_matrix[4][2] = {
 #define HDC3020_AUTO_MEAS_MODE_MPS_10_LPM3_LSB 0xFF
 /** @} */
 
-const uint8_t auto_measurement_mode_matrix[20][2] = {
+const uint8_t hdc3020_auto_measurement_mode_matrix[20][2] = {
     { HDC3020_AUTO_MEAS_MODE_MPS_0_5_LPM0_MSB, HDC3020_AUTO_MEAS_MODE_MPS_0_5_LPM0_LSB },
     { HDC3020_AUTO_MEAS_MODE_MPS_0_5_LPM1_MSB, HDC3020_AUTO_MEAS_MODE_MPS_0_5_LPM1_LSB },
     { HDC3020_AUTO_MEAS_MODE_MPS_0_5_LPM2_MSB, HDC3020_AUTO_MEAS_MODE_MPS_0_5_LPM2_LSB },
@@ -133,9 +129,6 @@ const uint8_t auto_measurement_mode_matrix[20][2] = {
     { HDC3020_AUTO_MEAS_MODE_MPS_10_LPM2_MSB, HDC3020_AUTO_MEAS_MODE_MPS_10_LPM2_LSB },
     { HDC3020_AUTO_MEAS_MODE_MPS_10_LPM3_MSB, HDC3020_AUTO_MEAS_MODE_MPS_10_LPM3_LSB },
 };
-
-#define HDC3020_MAX_LENGHT_AUTO_MEASUREMENT_MODE_MATRIX \
-    (sizeof(auto_measurement_mode_matrix) / sizeof(auto_measurement_mode_matrix[0]))
 
 /**
  * @name    Auto Measurement Mode
@@ -189,12 +182,12 @@ const uint8_t auto_measurement_mode_matrix[20][2] = {
  * @name    Integrated Heater
  * @{
  */
-#define HDC3020_INTEGRETED_HEATER_ENABLE_MSB 0x30
-#define HDC3020_INTEGRETED_HEATER_ENABLE_LSB 0x6D
-#define HDC3020_INTEGRETED_HEATER_DISABLE_MSB 0x30
-#define HDC3020_INTEGRETED_HEATER_DISABLE_LSB 0x66
-#define HDC3020_INTEGRETED_HEATER_CONFIGURE_MSB 0x30
-#define HDC3020_INTEGRETED_HEATER_CONFIGURE_LSB 0x6E
+#define HDC3020_INTEGRATED_HEATER_ENABLE_MSB 0x30
+#define HDC3020_INTEGRATED_HEATER_ENABLE_LSB 0x6D
+#define HDC3020_INTEGRATED_HEATER_DISABLE_MSB 0x30
+#define HDC3020_INTEGRATED_HEATER_DISABLE_LSB 0x66
+#define HDC3020_INTEGRATED_HEATER_CONFIGURE_MSB 0x30
+#define HDC3020_INTEGRATED_HEATER_CONFIGURE_LSB 0x6E
 /** @} */
 
 /**

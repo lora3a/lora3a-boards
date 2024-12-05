@@ -65,24 +65,24 @@ extern const saul_driver_t hdc3020_saul_temp_driver;
 extern const saul_driver_t hdc3020_saul_hum_driver;
 
 enum {
-    HDC3020_OK                          =  0,   /**< everything was fine */
-    HDC3020_ERR_BUS                     = -1,   /**< bus error */
-    HDC3020_ERR_NODEV                   = -2,   /**< did not detect device */
-    HDC3020_ERR_MEAS                    = -3,   /**< could not start measure */
-    HDC3020_ERR_HEATER_CONFIG           = -4,   /**< heater config (0 - 14) */
-    HDC3020_ERR_CRC_COMPARISON          = -5,   /**< CRC Comparison */
-    HDC3020_ERR_NULL_POINTER            = -6,   /**< Output data pointer is NULL */
-    HDC3020_ERR_LOW_POWER_MODE_CONFIG   = -7    /**< Low Power Mode can be only 0, 1, 2 or 3 */
+    HDC3020_OK         =  0,   /**< everything was fine */
+    HDC3020_ERR_BUS    = -1,   /**< bus error */
+    HDC3020_ERR_NODEV  = -2,   /**< did not detect device */
+    HDC3020_ERR_WRITE  = -3,   /**< write error */
+    HDC3020_ERR_READ   = -4,   /**< read erro */
+    HDC3020_ERR_CRC    = -5,   /**< CRC Comparison */
+    HDC3020_ERR_CONFIG = -6,   /**< config error */
+    HDC3020_ERR_MEAS   = -7,   /**< could not complete measure */
 };
 
-enum {
-    HDC3020_LOW_POWER_MODE_0    = 0,
-    HDC3020_LOW_POWER_MODE_1    = 1,
-    HDC3020_LOW_POWER_MODE_2    = 2,
-    HDC3020_LOW_POWER_MODE_3    = 3
-};
+typedef enum {
+    HDC3020_LOW_POWER_MODE_0 = 0,
+    HDC3020_LOW_POWER_MODE_1 = 1,
+    HDC3020_LOW_POWER_MODE_2 = 2,
+    HDC3020_LOW_POWER_MODE_3 = 3
+} hdc3020_low_power_mode_t;
 
-enum {
+typedef enum {
     HDC3020_MPS_0_5_LPM_0   = 0,
     HDC3020_MPS_0_5_LPM_1   = 1,
     HDC3020_MPS_0_5_LPM_2   = 2,
@@ -107,7 +107,7 @@ enum {
     HDC3020_MPS_10_LPM_1    = 17,
     HDC3020_MPS_10_LPM_2    = 18,
     HDC3020_MPS_10_LPM_3    = 19,
-};
+} hdc3020_auto_measurement_mode_t;
 
 enum {
     HDC3020_THRESHOLDS_SET_LOW_ALERT    = 0,
@@ -127,11 +127,7 @@ typedef struct {
     uint8_t temperature_low_tracking_alert : 1;
     uint8_t device_reset : 1;
     uint8_t checksum_verification : 1;
-}StatusRegister;
-
-
-
-
+} hdc3020_status_register;
 
 /**
  * @brief               Initialize the HDC302X device
@@ -146,52 +142,52 @@ int hdc3020_init(hdc3020_t *dev, const hdc3020_params_t *params);
 
 void hdc3020_deinit(const hdc3020_t *dev);
 
-int hdc3020_trigger_on_demand_measurement(
-    const hdc3020_t *dev, uint8_t hdc3020_low_power_mode);
+int hdc3020_trigger_on_demand_measurement(const hdc3020_t *dev,
+    hdc3020_low_power_mode_t mode);
 
-int hdc3020_fetch_on_demand_measurement(
-    const hdc3020_t *dev, double *temp, double *hum);
+int hdc3020_fetch_on_demand_measurement(const hdc3020_t *dev,
+    double *temp, double *rh);
 
-int hdc3020_set_auto_measurement_mode(
-    const hdc3020_t *dev, uint8_t auto_measurement_mode);
+int hdc3020_set_auto_measurement_mode(const hdc3020_t *dev,
+    hdc3020_auto_measurement_mode_t mode);
 
 int hdc3020_exit_auto_measurement_mode(const hdc3020_t *dev);
 
-int hdc3020_auto_measurement_mode_read(
-    const hdc3020_t *dev,
-    double *temperature, double *relative_humidity );
+int hdc3020_auto_measurement_mode_read(const hdc3020_t *dev, double *temp,
+    double *rh);
 
 int hdc3020_minimum_temperature_auto_measurement_mode_read(
-    const hdc3020_t *dev, double *minimum_temperature);
+    const hdc3020_t *dev, double *temp);
 
 int hdc3020_maximum_temperature_auto_measurement_mode_read(
-    const hdc3020_t *dev, double *maximum_temperature);
+    const hdc3020_t *dev, double *temp);
 
 int hdc3020_minimum_relative_humidity_auto_measurement_mode_read(
-    const hdc3020_t *dev, double *minimum_relative_humidity);
+    const hdc3020_t *dev, double *rh);
 
 int hdc3020_maximum_relative_humidity_auto_measurement_mode_read(
-    const hdc3020_t *dev, double *maximum_relative_humidity);
+    const hdc3020_t *dev, double *rh);
 
-int hdc3020_set_high_alert(
-    const hdc3020_t *dev,
-    double relative_humidity, double temperature);
+int hdc3020_set_low_alert(const hdc3020_t *dev, double temp, double rh);
 
-int hdc3020_set_low_alert(
-    const hdc3020_t *dev,
-    double relative_humidity, double temperature);
+int hdc3020_set_high_alert(const hdc3020_t *dev, double temp, double rh);
 
-int hdc3020_clear_high_alert(const hdc3020_t *dev, double relative_humidity, double temperature);
+int hdc3020_clear_high_alert(const hdc3020_t *dev, double temp, double rh);
 
-int hdc3020_clear_low_alert(const hdc3020_t *dev, double relative_humidity, double temperature);
+int hdc3020_clear_low_alert(const hdc3020_t *dev, double temp, double rh);
+
+int hdc3020_read_set_low_alert(const hdc3020_t *dev, double *temp,
+    double *rh);
+
+int hdc3020_read_clear_low_alert(const hdc3020_t *dev, double *temp,
+    double *rh);
+
+int hdc3020_read_clear_high_alert(const hdc3020_t *dev, double *temp,
+    double *rh);
 
 int hdc3020_transfert_alert_into_nvm(const hdc3020_t *dev);
 
 int hdc3020_deactivate_alert(const hdc3020_t *dev);
-
-int hdc3020_read_alert(const hdc3020_t *dev,
-                       double *low_alert_relative_humidity, double *low_alert_temperature,
-                       double *high_alert_relative_humidity, double *high_alert_temperature);
 
 int hdc3020_enable_heater(const hdc3020_t *dev);
 
@@ -199,23 +195,23 @@ int hdc3020_disable_heater(const hdc3020_t *dev);
 
 int hdc3020_configure_heater(const hdc3020_t *dev, uint8_t n_heater);
 
-int hdc3020_get_status_register(const hdc3020_t *dev, uint16_t *status_register);
+int hdc3020_get_status(const hdc3020_t *dev, uint16_t *status);
 
-int hdc3020_clear_status_register(const hdc3020_t *dev);
+int hdc3020_clear_status(const hdc3020_t *dev);
 
-int hdc3020_set_rh_temp_offset(
-    const hdc3020_t *dev, double relative_humidity_offset, double temperature_offset);
+int hdc3020_set_temp_rh_offset( const hdc3020_t *dev, double temp,
+    double rh);
 
-int hdc3020_get_rh_temp_offset(
-    const hdc3020_t *dev, double *relative_humidity_offset, double *temperature_offset);
+int hdc3020_get_temp_rh_offset(const hdc3020_t *dev, double *temp,
+    double *rh);
 
 int hdc3020_soft_reset(const hdc3020_t *dev);
 
 int hdc3020_i2c_general_call_reset(const hdc3020_t *dev);
 
-int hdc3020_read_nist_id(const hdc3020_t *dev, uint8_t data[6]);
+int hdc3020_read_nist_id(const hdc3020_t *dev, uint8_t *data, size_t len);
 
-int hdc3020_read_manufacturer_id(const hdc3020_t *dev, uint16_t *manufacturer_id);
+int hdc3020_read_manufacturer_id(const hdc3020_t *dev, uint16_t *man_id);
 
 int hdc3020_read(const hdc3020_t *dev, double *temp, double *hum);
 
