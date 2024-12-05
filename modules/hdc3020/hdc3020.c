@@ -118,6 +118,7 @@ int hdc3020_init(hdc3020_t *dev, const hdc3020_params_t *params)
     if (manufacturer_id != HDC3020_MANUFACTURER_ID)
         return HDC3020_ERR_NODEV;
 
+    hdc3020_clear_status(dev);
     return HDC3020_OK;
 }
 
