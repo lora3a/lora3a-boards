@@ -1,3 +1,4 @@
+#ifdef MODULE_PERIPH_GPIO
 /*
  * Copyright (C) 2014,2017 Freie Universität Berlin
  *
@@ -237,3 +238,4 @@ static int cmd_gpio_toggle(int argc, char **argv)
     return 0;
 }
 SHELL_COMMAND(gpio_toggle, "toggle pin", cmd_gpio_toggle);
+#endif

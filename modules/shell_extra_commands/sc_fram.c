@@ -1,3 +1,4 @@
+#ifdef MODULE_FRAM
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -88,3 +89,4 @@ SHELL_COMMAND(fram_init, "Initialize FRAM", cmd_init);
 SHELL_COMMAND(fram_read, "Read bytes from FRAM", cmd_read);
 SHELL_COMMAND(fram_write, "Write bytes to FRAM", cmd_write);
 SHELL_COMMAND(fram_erase, "Erase whole FRAM", cmd_erase);
+#endif

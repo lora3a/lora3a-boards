@@ -1,3 +1,4 @@
+#ifdef MODULE_PERIPH_I2C
 /*
  * Copyright (C) 2014 Freie Universität Berlin
  *
@@ -487,3 +488,4 @@ SHELL_COMMAND(i2c_write_bytes, "Write bytes to the I2C device", cmd_i2c_write_by
 SHELL_COMMAND(i2c_write_reg, "Write byte to register", cmd_i2c_write_reg);
 SHELL_COMMAND(i2c_write_regs, "Write bytes to registers", cmd_i2c_write_regs);
 SHELL_COMMAND(i2c_get_devs, "Gets amount of supported i2c devices", cmd_i2c_get_devs);
+#endif
