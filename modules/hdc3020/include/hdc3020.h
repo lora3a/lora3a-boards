@@ -40,7 +40,11 @@ extern "C"
 #define HDC3020_MANUFACTURER_ID (0x3000)
 /** @} */
 
+#ifndef HDC3020_MEAS_DELAY
+#define HDC3020_MEAS_DELAY      22000
+#endif
 
+typedef void (hdc3020_callback_t)(void *dev);
 
 /**
  * @brief   Device initialization parameters
@@ -48,10 +52,7 @@ extern "C"
 typedef struct {
     i2c_t i2c_dev;                      /**< I2C device which is used */
     uint8_t i2c_addr;                   /**< I2C address */
-    gpio_t enable_pin;
-    uint8_t enable_on;
-    uint32_t start_delay;
-    uint32_t measure_delay;
+    gpio_t alert_pin;
 } hdc3020_params_t;
 
 /**
@@ -59,6 +60,7 @@ typedef struct {
  */
 typedef struct {
     hdc3020_params_t params;  /**< Device Parameters */
+    hdc3020_callback_t *callback; /**< Alert callback */
 } hdc3020_t;
 
 extern const saul_driver_t hdc3020_saul_temp_driver;
@@ -141,6 +143,8 @@ typedef struct {
 int hdc3020_init(hdc3020_t *dev, const hdc3020_params_t *params);
 
 void hdc3020_deinit(const hdc3020_t *dev);
+
+void hdc3020_set_alert_callback(hdc3020_t *dev, hdc3020_callback_t cb);
 
 int hdc3020_trigger_on_demand_measurement(const hdc3020_t *dev,
     hdc3020_low_power_mode_t mode);

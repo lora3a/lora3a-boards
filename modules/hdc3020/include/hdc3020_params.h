@@ -44,31 +44,16 @@ extern "C" {
 #endif
 /**@}*/
 
-#ifndef HDC3020_ENABLE_PIN
-#define HDC3020_ENABLE_PIN      GPIO_UNDEF
-#endif
-
-#ifndef HDC3020_ENABLE_ON
-#define HDC3020_ENABLE_ON       (1)
-#endif
-
-#ifndef HDC3020_START_DELAY
-#define HDC3020_START_DELAY     4000
-#endif
-
-#ifndef HDC3020_MEAS_DELAY
-#define HDC3020_MEAS_DELAY      22000
+#ifndef HDC3020_ALERT_PIN
+#define HDC3020_ALERT_PIN      GPIO_UNDEF
 #endif
 
 #ifndef HDC3020_PARAMS
-#define HDC3020_PARAMS                          \
-    {                                           \
-        .i2c_dev = HDC3020_PARAM_I2C_DEV,       \
-        .i2c_addr = HDC3020_PARAM_I2C_ADDR,     \
-        .enable_pin = HDC3020_ENABLE_PIN,       \
-        .enable_on = HDC3020_ENABLE_ON,         \
-        .start_delay = HDC3020_START_DELAY,     \
-        .measure_delay = HDC3020_MEAS_DELAY,    \
+#define HDC3020_PARAMS                       \
+    {                                        \
+        .i2c_dev = HDC3020_PARAM_I2C_DEV,    \
+        .i2c_addr = HDC3020_PARAM_I2C_ADDR,  \
+        .alert_pin = HDC3020_ALERT_PIN,      \
     }
 #endif
 

@@ -100,6 +100,11 @@ static double temp_from_hdc3020(const uint16_t data)
     return (data) * 175. / (0xFFFF) - 45;
 }
 /////////////////////////////////////////////////////////////////////
+static void _alert_callback(void *arg) {
+    hdc3020_t *dev = arg;
+    if (dev->callback)
+        dev->callback(arg);
+}
 
 int hdc3020_init(hdc3020_t *dev, const hdc3020_params_t *params)
 {
@@ -107,11 +112,10 @@ int hdc3020_init(hdc3020_t *dev, const hdc3020_params_t *params)
 
     assert(dev && params);
     dev->params = *params;
+    dev->callback = NULL;
 
-    if (gpio_is_valid(dev->params.enable_pin)) {
-        gpio_init(dev->params.enable_pin, GPIO_OUT);
-        gpio_write(dev->params.enable_pin, dev->params.enable_on);
-        ztimer_sleep(ZTIMER_USEC, dev->params.start_delay);
+    if (gpio_is_valid(dev->params.alert_pin)) {
+        gpio_init_int(dev->params.alert_pin, GPIO_IN, GPIO_BOTH, _alert_callback, (void *)dev);
     }
 
     hdc3020_read_manufacturer_id(dev, &manufacturer_id);
@@ -124,8 +128,12 @@ int hdc3020_init(hdc3020_t *dev, const hdc3020_params_t *params)
 
 void hdc3020_deinit(const hdc3020_t *dev)
 {
-    if (gpio_is_valid(dev->params.enable_pin))
-        gpio_write(dev->params.enable_pin, 1 - dev->params.enable_on);
+    if (gpio_is_valid(dev->params.alert_pin))
+        gpio_irq_disable(dev->params.alert_pin);
+}
+
+void hdc3020_set_alert_callback(hdc3020_t *dev, hdc3020_callback_t cb) {
+    dev->callback = cb;
 }
 
 int hdc3020_trigger_on_demand_measurement(const hdc3020_t *dev,
@@ -702,7 +710,7 @@ int hdc3020_read(const hdc3020_t *dev, double *temp, double *hum)
     if (status != HDC3020_OK)
         return status;
 
-    ztimer_sleep(ZTIMER_USEC, dev->params.measure_delay);
+    ztimer_sleep(ZTIMER_USEC, HDC3020_MEAS_DELAY);
 
     return hdc3020_fetch_on_demand_measurement(dev, temp, hum);
 }
