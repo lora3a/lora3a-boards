@@ -120,6 +120,21 @@ void chbsp_int1_interrupt_disable(ch_dev_t *dev_ptr) {
     gpio_irq_disable(soniclib_params[dev_num].io_pin);
 }
 
+void chbsp_int1_interrupt_enable(ch_dev_t *dev_ptr) {
+    uint8_t dev_num = ch_get_dev_num(dev_ptr);
+    gpio_irq_enable(soniclib_params[dev_num].io_pin);
+}
+
+void chbsp_int1_clear(ch_dev_t *dev_ptr) {
+    uint8_t dev_num = ch_get_dev_num(dev_ptr);
+    gpio_clear(soniclib_params[dev_num].io_pin);
+}
+
+void chbsp_int1_set(ch_dev_t *dev_ptr) {
+    uint8_t dev_num = ch_get_dev_num(dev_ptr);
+    gpio_set(soniclib_params[dev_num].io_pin);
+}
+
 int chbsp_i2c_init(void) {
     for (uint8_t dev_num = 0; dev_num < SONICLIB_NUMOF; dev_num++) {
         // might init same bus multiple times
