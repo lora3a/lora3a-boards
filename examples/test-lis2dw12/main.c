@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "saml21_backup_mode.h"
 
 #include "periph_conf.h"
@@ -11,6 +12,10 @@
 #include "lis2dw12_params.h"
 
 #define FW_VERSION "01.00.00"
+
+#define M_PI   3.14159265358979323846264338327950288
+#define radToDeg(angleInRadians) ((angleInRadians) * 180.0 / M_PI)
+
 
 /* use { .pin=EXTWAKE_NONE } to disable */
 #define EXTWAKE { \
@@ -25,7 +30,7 @@ static lis2dw12_t lis2dw12;
 
 void lis2dw12_sensor_read(void)
 {
-    float acc_x, acc_y, acc_z, acc_t;
+    float acc_x, acc_y, acc_z, acc_t, module, angleX, angleY, angleZ;
 
     if (lis2dw12_init(&lis2dw12, &lis2dw12_params[0]) != LIS2DW12_OK) {
         puts("[SENSOR lis2dw12] INIT FAILED.");
@@ -36,11 +41,19 @@ void lis2dw12_sensor_read(void)
         puts("[SENSOR lis2dw12] READ FAILED.");
         return;
     }
-
+	module = sqrtf((acc_x*acc_x)+(acc_y*acc_y)+(acc_z*acc_z)); 
+	angleX = radToDeg(acosf(acc_x/abs(module)));
+	angleY = radToDeg(acosf(acc_y/abs(module)));
+	angleZ = radToDeg(acosf(acc_z/abs(module)));
+	
     printf(
         "[DATA] X: %.3f, Y: %.3f, Z: %.3f, TEMP: %.2f\n",
         acc_x, acc_y, acc_z,
         acc_t);
+    printf(
+        "MOD: %.3f, angleX: %.3f, angleY: %.3f, angleZ: %.3f\n",
+        module, angleX, angleY, angleZ
+		);
 }
 
 void wakeup_task(void)
@@ -82,6 +95,7 @@ int main(void)
         if (SLEEP_TIME > -1) {
             printf("Periodic task running every %d seconds.\n", SLEEP_TIME);
         }
+        lis2dw12_sensor_read();
         break;
     }
 
