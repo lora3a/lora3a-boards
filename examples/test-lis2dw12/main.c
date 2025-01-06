@@ -82,12 +82,11 @@ int main(void)
         if (SLEEP_TIME > -1) {
             printf("Periodic task running every %d seconds.\n", SLEEP_TIME);
         }
-        sensors_read();
         break;
     }
 
     puts("Entering backup mode.");
-    lis2dw12_sensor_read(0, extwake, SLEEP_TIME, 1);
+    saml21_backup_mode_enter(0, extwake, SLEEP_TIME, 1);
     // never reached
     return 0;
 }
