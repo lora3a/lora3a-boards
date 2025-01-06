@@ -22,7 +22,7 @@
         .pin = EXTWAKE_PIN6, \
         .polarity = EXTWAKE_HIGH, \
         .flags = EXTWAKE_IN_PU }
-#define SLEEP_TIME 5 /* in seconds; -1 to disable */
+#define SLEEP_TIME 1 /* in seconds; -1 to disable */
 
 static saml21_extwake_t extwake = EXTWAKE;
 static lis2dw12_t lis2dw12;
@@ -30,8 +30,9 @@ static lis2dw12_t lis2dw12;
 
 void lis2dw12_sensor_read(void)
 {
-    float acc_x, acc_y, acc_z, acc_t, module, angleX, angleY, angleZ;
-
+    float acc_x, acc_y, acc_z, acc_t;
+	double dacc_x, dacc_y, dacc_z, module, angleX, angleY, angleZ;
+	
     if (lis2dw12_init(&lis2dw12, &lis2dw12_params[0]) != LIS2DW12_OK) {
         puts("[SENSOR lis2dw12] INIT FAILED.");
         return;
@@ -41,10 +42,13 @@ void lis2dw12_sensor_read(void)
         puts("[SENSOR lis2dw12] READ FAILED.");
         return;
     }
-	module = sqrtf((acc_x*acc_x)+(acc_y*acc_y)+(acc_z*acc_z)); 
-	angleX = radToDeg(acosf(acc_x/abs(module)));
-	angleY = radToDeg(acosf(acc_y/abs(module)));
-	angleZ = radToDeg(acosf(acc_z/abs(module)));
+    dacc_x=(double)acc_x;
+    dacc_y=(double)acc_y;
+    dacc_z=(double)acc_z;
+	module = sqrt((dacc_x*dacc_x)+(dacc_y*dacc_y)+(dacc_z*dacc_z)); 
+	angleX = radToDeg(acos(dacc_x/fabs(module)));
+	angleY = radToDeg(acos(dacc_y/fabs(module)));
+	angleZ = radToDeg(acos(dacc_z/fabs(module)));
 	
     printf(
         "[DATA] X: %.3f, Y: %.3f, Z: %.3f, TEMP: %.2f\n",
