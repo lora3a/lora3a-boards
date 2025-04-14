@@ -37,5 +37,6 @@ int senseair_init(senseair_t* dev, const senseair_params_t* params);
 int senseair_read(const senseair_t *dev, uint16_t *conc_ppm, int16_t *temp_cC);
 int senseair_read_abc_data(const senseair_t *dev, senseair_abc_data_t *abc_data);
 int senseair_write_abc_data(const senseair_t *dev, senseair_abc_data_t *abc_data);
+int senseair_force_abc_calibration(const senseair_t *dev);
 
 #endif /* SENSEAIR_H */

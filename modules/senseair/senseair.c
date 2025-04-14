@@ -11,13 +11,18 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-#define SENSEAIR_ERROR_STATUS_REG     0x00
-#define SENSEAIR_CONCENTRATION_REG    0x06
-#define SENSEAIR_TEMPERATURE_REG      0x08
-#define SENSEAIR_MEASURE_COUNT_REG    0x0d
-#define SENSEAIR_START_MEASURE_REG    0x93
-#define SENSEAIR_MEASURE_MODE_REG     0x95
-#define SENSEAIR_SAVED_STATE_REG      0xc0
+#define SENSEAIR_ERROR_STATUS_REG        0x00
+#define SENSEAIR_CONCENTRATION_REG       0x06
+#define SENSEAIR_TEMPERATURE_REG         0x08
+#define SENSEAIR_MEASURE_COUNT_REG       0x0d
+#define SENSEAIR_CALIBRATION_STATUS_REG  0x81
+#define SENSEAIR_CALIBRATION_COMMAND_REG 0x82
+#define SENSEAIR_START_MEASURE_REG       0x93
+#define SENSEAIR_MEASURE_MODE_REG        0x95
+#define SENSEAIR_SAVED_STATE_REG         0xc0
+
+#define SENSEAIR_FORCED_ABC_CALIBRATION  0x7c03
+#define SENSEAIR_ABC_CALIBRATION         (1 << 3)
 
 #define BSWAP(data)     (((data & 0xff) << 8) + ((data >> 8) & 0xff))
 
@@ -190,5 +195,43 @@ int senseair_read_abc_data(const senseair_t *dev, senseair_abc_data_t *abc_data)
         return SENSEAIR_ERR_ABC_READ;
     }
     _print_senseair_data(abc_data);
+    return SENSEAIR_OK;
+}
+
+int senseair_force_abc_calibration(const senseair_t *dev)
+{
+    int res = 0;
+    uint8_t reg;
+    uint16_t data = SENSEAIR_FORCED_ABC_CALIBRATION;
+
+    DEBUG("Starting forced ABC calibration.\n");
+    // zero calibration status register
+    res = i2c_write_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_CALIBRATION_STATUS_REG, 0, 0);
+    if (res) {
+        DEBUG("ERROR %d starting calibration.\n", res);
+        return SENSEAIR_ERR_MEAS;
+    }
+    // write calibration start to calibration command register
+    if (i2c_write_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_CALIBRATION_COMMAND_REG, &data, sizeof(data), 0)) {
+        DEBUG("ERROR: writing forced ABC calibration start failed.\n");
+        return SENSEAIR_ERR_MEAS;
+    }
+    // start measure
+    data = 0;
+    res = senseair_read(dev, &data, NULL);
+    if (res) {
+        DEBUG("ERROR %d reading data after calibration.\n", res);
+        return SENSEAIR_ERR_MEAS;
+    }
+    // read calibration status register
+    res = i2c_read_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_CALIBRATION_STATUS_REG, &reg, 0);
+    if (res) {
+        DEBUG("ERROR %d reading calibration status.\n", res);
+        return SENSEAIR_ERR_MEAS;
+    }
+    if (reg != SENSEAIR_ABC_CALIBRATION) {
+        DEBUG("ERROR unexpected calibration status %d.\n", reg);
+        return SENSEAIR_ERR_MEAS;
+    }
     return SENSEAIR_OK;
 }
