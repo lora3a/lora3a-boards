@@ -17,14 +17,22 @@
 #define SENSEAIR_MEASURE_COUNT_REG       0x0d
 #define SENSEAIR_CALIBRATION_STATUS_REG  0x81
 #define SENSEAIR_CALIBRATION_COMMAND_REG 0x82
+#define SENSEAIR_CALIBRATION_TARGET_REG  0x84
 #define SENSEAIR_START_MEASURE_REG       0x93
 #define SENSEAIR_MEASURE_MODE_REG        0x95
 #define SENSEAIR_SAVED_STATE_REG         0xc0
 
+#define SENSEAIR_FACTORY_CALIBRATION     0x7c02
 #define SENSEAIR_FORCED_ABC_CALIBRATION  0x7c03
-#define SENSEAIR_ABC_CALIBRATION         (1 << 3)
+#define SENSEAIR_TARGET_CALIBRATION      0x7c05
+#define SENSEAIR_BACKGROUND_CALIBRATION  0x7c06
+#define SENSEAIR_ZERO_CALIBRATION        0x7c07
 
-#define BSWAP(data)     (((data & 0xff) << 8) + ((data >> 8) & 0xff))
+#define SENSEAIR_FACTORY_CALIBRATION_OK     (1 << 2)
+#define SENSEAIR_ABC_CALIBRATION_OK         (1 << 3)
+#define SENSEAIR_TARGET_CALIBRATION_OK      (1 << 4)
+#define SENSEAIR_BACKGROUND_CALIBRATION_OK  (1 << 5)
+#define SENSEAIR_ZERO_CALIBRATION_OK        (1 << 6)
 
 static const char *senseair_signature = "SUNR";
 
@@ -94,21 +102,25 @@ int senseair_init(senseair_t *dev, const senseair_params_t *params)
 int senseair_read(const senseair_t *dev, uint16_t *conc_ppm, int16_t *temp_cC)
 {
     int res, count = 0;
-    uint8_t reg;
+    uint8_t cnt, reg;
     uint16_t data = 0;
 
     DEBUG("Starting measure.\n");
-    res =
-        i2c_write_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_START_MEASURE_REG, 1, 0);
+    cnt = 0;
+    res = i2c_read_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_MEASURE_COUNT_REG, &cnt, 0);
+    if (res) {
+        DEBUG("ERROR %d during measure.\n", res);
+        return SENSEAIR_ERR_MEAS;
+    }
+    res = i2c_write_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_START_MEASURE_REG, 1, 0);
     if (res) {
         DEBUG("ERROR %d starting measure.\n", res);
         return SENSEAIR_ERR_MEAS;
     }
-    reg = 0;
-    while (reg == 0) {
+    reg = cnt;
+    while (reg == cnt) {
         ztimer_sleep(ZTIMER_MSEC, 50);
-        res = i2c_read_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_MEASURE_COUNT_REG,
-                           &reg, 0);
+        res = i2c_read_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_MEASURE_COUNT_REG, &reg, 0);
         if (res) {
             DEBUG("ERROR %d during measure.\n", res);
             return SENSEAIR_ERR_MEAS;
@@ -120,23 +132,21 @@ int senseair_read(const senseair_t *dev, uint16_t *conc_ppm, int16_t *temp_cC)
         }
     }
     if (conc_ppm != NULL) {
-        res = i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_CONCENTRATION_REG,
-                            &data, 2, 0);
+        res = i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_CONCENTRATION_REG, &data, 2, 0);
         if (res) {
             DEBUG("ERROR %d reading concentration.\n", res);
             return SENSEAIR_ERR_MEAS;
         }
-        *conc_ppm = BSWAP(data);
+        *conc_ppm = __builtin_bswap16(data);
         DEBUG("Concentration: %d ppm\n", *conc_ppm);
     }
     if (temp_cC != NULL) {
-        res = i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_TEMPERATURE_REG,
-                            &data, 2, 0);
+        res = i2c_read_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_TEMPERATURE_REG, &data, 2, 0);
         if (res) {
             DEBUG("ERROR %d reading temperature.\n", res);
             return SENSEAIR_ERR_MEAS;
         }
-        *temp_cC = (int16_t)BSWAP(data);
+        *temp_cC = (int16_t)__builtin_bswap16(data);
         DEBUG("Temperature: %4.2f °C\n", (*temp_cC / 100.));
     }
     return SENSEAIR_OK;
@@ -198,13 +208,13 @@ int senseair_read_abc_data(const senseair_t *dev, senseair_abc_data_t *abc_data)
     return SENSEAIR_OK;
 }
 
-int senseair_force_abc_calibration(const senseair_t *dev)
+int senseair_background_calibration(const senseair_t *dev)
 {
     int res = 0;
-    uint8_t reg;
-    uint16_t data = SENSEAIR_FORCED_ABC_CALIBRATION;
+    uint8_t reg = 0;
+    uint16_t data = __builtin_bswap16(SENSEAIR_BACKGROUND_CALIBRATION);
 
-    DEBUG("Starting forced ABC calibration.\n");
+    DEBUG("Background ABC calibration routine.\n");
     // zero calibration status register
     res = i2c_write_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_CALIBRATION_STATUS_REG, 0, 0);
     if (res) {
@@ -213,10 +223,11 @@ int senseair_force_abc_calibration(const senseair_t *dev)
     }
     // write calibration start to calibration command register
     if (i2c_write_regs(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_CALIBRATION_COMMAND_REG, &data, sizeof(data), 0)) {
-        DEBUG("ERROR: writing forced ABC calibration start failed.\n");
+        DEBUG("ERROR: writing background ABC calibration start failed.\n");
         return SENSEAIR_ERR_MEAS;
     }
     // start measure
+    DEBUG("Starting calibration measure.\n");
     data = 0;
     res = senseair_read(dev, &data, NULL);
     if (res) {
@@ -224,13 +235,15 @@ int senseair_force_abc_calibration(const senseair_t *dev)
         return SENSEAIR_ERR_MEAS;
     }
     // read calibration status register
+    DEBUG("Read calibration status.\n");
     res = i2c_read_reg(dev->params.i2c_dev, dev->params.i2c_addr, SENSEAIR_CALIBRATION_STATUS_REG, &reg, 0);
     if (res) {
         DEBUG("ERROR %d reading calibration status.\n", res);
         return SENSEAIR_ERR_MEAS;
     }
-    if (reg != SENSEAIR_ABC_CALIBRATION) {
+    if (reg != SENSEAIR_BACKGROUND_CALIBRATION_OK) {
         DEBUG("ERROR unexpected calibration status %d.\n", reg);
+        printf("ERROR unexpected calibration status %d.\n", reg);
         return SENSEAIR_ERR_MEAS;
     }
     return SENSEAIR_OK;
