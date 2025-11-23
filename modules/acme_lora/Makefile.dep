@@ -1,1 +1,2 @@
 USEMODULE += sx1276
+USEMODULE += ztimer_usec
