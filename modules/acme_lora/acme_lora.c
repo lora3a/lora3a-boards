@@ -13,7 +13,6 @@
 #define MSG_TYPE_ISR (0x3456)
 
 #define ENABLE_DEBUG 0
-
 #include "debug.h"
 
 static char stack[SX127X_STACKSIZE];
@@ -102,7 +101,7 @@ int lora_write(const iolist_t *packet)
 
     mutex_lock(&lora_transmission_lock);
 #if defined(BOARD_SAMR34_XPRO) || defined(BOARD_LORA3A_H10) || defined(BOARD_BERTA_H10)
-    printf("boost=%d txpower=%d\n", lora->boost, lora->power);
+    DEBUG("boost=%d txpower=%d\n", lora->boost, lora->power);
     // put here the output select pin selection based on persist value
     if (lora->boost) {
         gpio_clear(TX_OUTPUT_SEL_PIN); // V1 = 0

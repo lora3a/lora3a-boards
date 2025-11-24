@@ -4,6 +4,9 @@
 #include "periph/gpio.h"
 #include "acme_bus_mode.h"
 
+#define ENABLE_DEBUG 0
+#include "debug.h"
+
 void board_init(void)
 {
     /* add pullups to UART0 pins */
@@ -19,7 +22,7 @@ void board_init(void)
 #endif /* USEMODULE_SX127X */
 
 #if defined(ACME0_BUS_MODE)
-    printf("Enable ACME Sensor 0 as %s\n", BUS_MODE_TO_STR(ACME0_BUS_MODE));
+    DEBUG("Enable ACME Sensor 0 as %s\n", BUS_MODE_TO_STR(ACME0_BUS_MODE));
 
     #if !IS_USED(MODULE_SAUL_GPIO)
     gpio_init(ACME0_POWER_PIN, GPIO_OUT);
@@ -34,7 +37,7 @@ void board_init(void)
 #endif
 
 #if defined(ACME1_BUS_MODE)
-    printf("Enable ACME Sensor 1 as %s\n", BUS_MODE_TO_STR(ACME1_BUS_MODE));
+    DEBUG("Enable ACME Sensor 1 as %s\n", BUS_MODE_TO_STR(ACME1_BUS_MODE));
 
     #if !IS_USED(MODULE_SAUL_GPIO)
     gpio_init(ACME1_POWER_PIN, GPIO_OUT);
@@ -48,7 +51,7 @@ void board_init(void)
 #endif
 
 #if defined(ACME2_BUS_MODE)
-    printf("Enable ACME Sensor 2 as %s\n", BUS_MODE_TO_STR(ACME2_BUS_MODE));
+    DEBUG("Enable ACME Sensor 2 as %s\n", BUS_MODE_TO_STR(ACME2_BUS_MODE));
 
     #if !IS_USED(MODULE_SAUL_GPIO)
     gpio_init(ACME2_POWER_PIN, GPIO_OUT);
